@@ -1,0 +1,8 @@
+[package]
+name = "bioinformatics"
+version = "0.1.0"
+authors = ["Dmitry Bushev <bushevdv@gmail.com>"]
+
+[[bin]]
+name = "pattern_count"
+path = "src/pattern_count.rs"
