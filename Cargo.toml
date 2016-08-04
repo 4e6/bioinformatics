@@ -2,11 +2,3 @@
 name = "bioinformatics"
 version = "0.1.0"
 authors = ["Dmitry Bushev <bushevdv@gmail.com>"]
-
-[lib]
-name = "util"
-path = "src/lib.rs"
-
-[[bin]]
-name = "pattern_count"
-path = "src/pattern_count.rs"
