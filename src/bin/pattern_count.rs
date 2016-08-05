@@ -2,7 +2,7 @@ extern crate bio;
 
 use std::io;
 
-use bio::strings::indexes;
+use bio::strings::pattern_count;
 
 static FAILED_TO_READ_LINE: &'static str = "Failed to read line";
 
@@ -20,7 +20,6 @@ fn main() {
     io::stdin().read_line(&mut pat)
         .expect(FAILED_TO_READ_LINE);
 
-    let inds = indexes(text.trim(), pat.trim());
-    let res = inds.len();
+    let res = pattern_count(text.trim(), pat.trim());
     println!("{}", res);
 }

@@ -15,3 +15,7 @@ pub fn indexes(text: &str, pat: &str) -> Vec<usize> {
     }
     res
 }
+
+pub fn pattern_count(text: &str, pat: &str) -> usize {
+    self::indexes(text, pat).len()
+}
