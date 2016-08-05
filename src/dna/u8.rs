@@ -35,7 +35,7 @@ mod tests {
 
     use super::DNA;
 
-    static SEQ_STRING: &'static str = "ABAC";
+    static SEQ_STRING: &'static str = "ACTATGCGACT";
 
     #[test]
     fn test_from_str() {

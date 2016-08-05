@@ -1,7 +1,7 @@
 pub mod dna;
 pub mod strings;
 
-use dna::DNA;
+use dna::u8::DNA;
 
 pub fn find(dna: DNA, ori: DNA) -> Vec<usize> {
     let mut res = Vec::new();
