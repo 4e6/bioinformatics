@@ -28,6 +28,28 @@ impl DNA {
     pub fn as_str(&self) -> &str {
         str::from_utf8(&self.seq).unwrap()
     }
+
+    pub fn complement(&self) -> DNA {
+        let seq = self.seq.iter()
+            .map(self::complement)
+            .collect();
+        DNA { seq: seq }
+    }
+
+    pub fn reverse(&mut self) {
+        self.seq.reverse();
+    }
+}
+
+pub fn complement(nuc: &u8) -> u8 {
+    let c = match *nuc as char {
+        'A' => 'T',
+        'T' => 'A',
+        'G' => 'C',
+        'C' => 'G',
+        x => panic!("Unsupported NUC: {}", x)
+    };
+    c as u8
 }
 
 #[cfg(test)]
@@ -54,5 +76,14 @@ mod tests {
     fn test_as_str() {
         let dna = DNA::from_str(SEQ_STRING);
         assert_eq!(SEQ_STRING, dna.as_str());
+    }
+
+    #[test]
+    fn test_reverse_complement() {
+        let dna = DNA::from_str("AAAACCCGGT");
+        let reverse_complement = "ACCGGGTTTT";
+        let mut comp = dna.complement();
+        comp.reverse();
+        assert_eq!(comp.to_string(), reverse_complement.to_string())
     }
 }
