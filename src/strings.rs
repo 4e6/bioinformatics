@@ -48,6 +48,44 @@ pub fn frequent_words(text: &str, k: usize) -> Vec<&str> {
     res
 }
 
+/// all distinct k-me rs in lexicographical order
+pub fn kmers(text: &str, k: usize) -> Vec<&str> {
+    let mut res = Vec::new();
+    for i in 0..text.len()-k+1 {
+        res.push(&text[i..i+k]);
+    }
+    res.sort();
+    res.dedup();
+    res
+}
+
+pub fn frequency_array(text: &str, k: usize) -> Vec<usize> {
+    fn symbol_to_number(sym: u8) -> usize {
+        match sym as char {
+            'A' => 0,
+            'C' => 1,
+            'G' => 2,
+            'T' => 3,
+            c => panic!("symbol_to_number: invalid char {}", c)
+        }
+    }
+    fn pattern_to_number(pat: &[u8]) -> usize {
+        if pat.len() == 0 {
+            0
+        } else {
+            let (init, last) = pat.split_at(pat.len()-1);
+            4 * pattern_to_number(init) + symbol_to_number(last[0])
+        }
+    }
+    let len = 4usize.pow(k as u32);
+    let mut freqs = vec![0; len];
+    for i in 0..text.len()-k+1 {
+        let j = pattern_to_number(&text[i..i+k].as_bytes());
+        freqs[j] += 1;
+    }
+    freqs
+}
+
 pub fn clump_finding_naive(text: &str, k: usize, l: usize, t: usize) -> Vec<&str> {
     let len = text.len() - l + 1;
     let mut res = Vec::new();
