@@ -4,10 +4,12 @@ pub mod strings;
 
 use dna::u8::DNA;
 
-pub fn find(dna: DNA, ori: DNA) -> Vec<usize> {
+/// find occurrences of pattern in dna
+/// return vector of starting positions of pattern in dna
+pub fn find(dna: DNA, pat: DNA) -> Vec<usize> {
     let mut res = Vec::new();
-    for (i, w) in dna.seq.windows(ori.len()).enumerate() {
-        if w == ori.seq.as_slice() {
+    for (i, w) in dna.seq.windows(pat.len()).enumerate() {
+        if w == pat.seq.as_slice() {
             res.push(i);
         }
     }

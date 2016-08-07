@@ -25,17 +25,6 @@ fn frequent_words(text: &str, k: usize) -> Vec<&str> {
     res
 }
 
-fn print_result(res: &[&str]) {
-    for (i, r) in res.iter().enumerate() {
-        if i < res.len() - 1 {
-            print!("{} ", r);
-        } else {
-            print!("{}", r);
-        }
-    }
-    println!("");
-}
-
 /// 1.2 Hidden Messages in the Replication Origin
 ///
 /// Code Challenge: Solve the Frequent Words Problem.
@@ -55,5 +44,5 @@ fn main() {
 
     let res = frequent_words(&text, k);
 
-    print_result(&res);
+    bio::io::print_vec(&res);
 }
