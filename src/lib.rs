@@ -1,4 +1,5 @@
 pub mod dna;
+pub mod io;
 pub mod strings;
 
 use dna::u8::DNA;

@@ -39,6 +39,12 @@ impl DNA {
     pub fn reverse(&mut self) {
         self.seq.reverse();
     }
+
+    pub fn reverse_complement(&self) -> DNA {
+        let mut comp = self.complement();
+        comp.reverse();
+        comp
+    }
 }
 
 pub fn complement(nuc: &u8) -> u8 {

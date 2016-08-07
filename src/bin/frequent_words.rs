@@ -1,10 +1,6 @@
 extern crate bio;
 
-use std::io;
-
 use bio::strings::pattern_count;
-
-static FAILED_TO_READ_LINE: &'static str = "Failed to read line";
 
 fn frequent_words(text: &str, k: usize) -> Vec<&str> {
     let len = text.len() - k + 1;
@@ -49,17 +45,15 @@ fn main() {
 
     let mut text = String::new();
     let mut kstr = String::new();
-    io::stdin().read_line(&mut text)
-        .expect(FAILED_TO_READ_LINE);
-    io::stdin().read_line(&mut kstr)
-        .expect(FAILED_TO_READ_LINE);
+    bio::io::read_line(&mut text);
+    bio::io::read_line(&mut kstr);
 
-    let k = kstr.trim().parse::<usize>().unwrap();
+    let k = kstr.parse::<usize>().unwrap();
 
     //println!("DEBUG: text={}", text.trim());
     //println!("DEBUG: k={}", k);
 
-    let res = frequent_words(text.trim(), k);
+    let res = frequent_words(&text, k);
 
     print_result(&res);
 }
