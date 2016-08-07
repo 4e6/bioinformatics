@@ -1,6 +1,6 @@
 extern crate bio;
 
-use bio::strings::clump_finding_naive;
+use bio::strings::clump_finding;
 
 /// Clump Finding Problem: Find patterns forming clumps in a string.
 /// Input: A string Genome, and integers k, L, and t.
@@ -22,7 +22,7 @@ fn main() {
     let l = v[1];
     let t = v[2];
 
-    let res = clump_finding_naive(&genome, k, l, t);
+    let res = clump_finding(&genome, k, l, t);
 
     bio::io::print_vec(&res);
 }
