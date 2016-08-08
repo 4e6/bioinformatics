@@ -190,3 +190,14 @@ pub fn skew_min(skew: &[isize]) -> Vec<usize> {
         .unzip();
     idx
 }
+
+pub fn hamming_distance(xs: &str, ys: &str) -> usize {
+    let (xi, yi) = (xs.chars(), ys.chars());
+    xi.zip(yi).fold(0, |acc, (x, y)| {
+        if x == y {
+            acc
+        } else {
+            acc + 1
+        }
+    })
+}
