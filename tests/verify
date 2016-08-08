@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# integration tests, compare output of executable with saved answer.
+
+# Dirs
+declare -r TESTS=$(cd "$(dirname "${BASH_SOURCE:-$0}")" || exit; pwd)
+declare -r ROOT=$(dirname "$TESTS")
+declare -r DATA=$ROOT/data
+declare -r TARGET=$ROOT/target/release
+
+cargo_rebuild() {
+  cargo clean
+  cargo build --release
+}
+
+(cd "$ROOT" && cargo_rebuild)
+
+for data in $DATA/*/*.txt; do
+  input=$(basename "$data" .txt)
+  expected_output="$input.out"
+  executable=$(basename "$(dirname "$data")")
+  diff --brief "$DATA/$executable/$expected_output" <("$TARGET/$executable" < "$data")
+  test $? && echo "OK $executable $input"
+done
