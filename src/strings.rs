@@ -168,3 +168,25 @@ pub fn clump_finding(genome: &str, k: usize, l: usize, t: usize) -> Vec<String> 
     res.dedup();
     res
 }
+
+pub fn skew(genome: &str) -> Vec<isize> {
+    genome.chars()
+        .scan(0, |acc, c| {
+            *acc = match c {
+                'G' => *acc + 1,
+                'C' => *acc - 1,
+                _ => *acc
+            };
+            Some(*acc)
+        }).collect()
+}
+
+pub fn skew_min(skew: &[isize]) -> Vec<usize> {
+    let &min = skew.iter().min().unwrap();
+    let (idx, _): (Vec<usize>, Vec<isize>) = skew
+        .iter()
+        .enumerate()
+        .filter(|&(_, &x)| x == min)
+        .unzip();
+    idx
+}
