@@ -1,5 +1,10 @@
 use std::str;
 
+pub static A: u8 = 65;
+pub static T: u8 = 84;
+pub static G: u8 = 71;
+pub static C: u8 = 67;
+
 pub struct DNA {
     pub seq: Vec<u8>
 }
@@ -44,6 +49,16 @@ impl DNA {
         let mut comp = self.complement();
         comp.reverse();
         comp
+    }
+
+    pub fn find<F>(&self, pattern: &DNA, p: F) -> (Vec<usize>, Vec<&[u8]>)
+        where F: Fn(&[u8], &[u8]) -> bool {
+        let pat = pattern.seq.as_slice();
+        self.seq
+            .windows(pat.len())
+            .enumerate()
+            .filter(|&(_, w)| p(w, pat))
+            .unzip()
     }
 }
 

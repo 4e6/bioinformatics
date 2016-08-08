@@ -2,6 +2,8 @@ pub mod dna;
 pub mod io;
 pub mod strings;
 
+use std::cmp::PartialEq;
+
 use dna::u8::DNA;
 
 /// find occurrences of pattern in dna
@@ -14,4 +16,20 @@ pub fn find(dna: DNA, pat: DNA) -> Vec<usize> {
         }
     }
     res
+}
+
+pub fn hamming_distance<T: PartialEq>(xs: &[T], ys: &[T]) -> usize {
+    xs.iter().zip(ys.iter())
+        .fold(0, |acc, (x, y)| if x == y { acc } else { acc + 1 })
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn hamming_distance() {
+        let xs = "GGGCCGTTGGT";
+        let ys = "GGACCGTTGAC";
+        assert_eq!(super::hamming_distance(xs.as_bytes(), ys.as_bytes()), 3);
+    }
 }
