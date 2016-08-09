@@ -1,9 +1,9 @@
 use std::str;
 
-pub static A: u8 = 65;
-pub static T: u8 = 84;
-pub static G: u8 = 71;
-pub static C: u8 = 67;
+pub const A: u8 = 'A' as u8;
+pub const T: u8 = 'T' as u8;
+pub const G: u8 = 'G' as u8;
+pub const C: u8 = 'C' as u8;
 
 pub struct DNA {
     pub seq: Vec<u8>
@@ -18,7 +18,8 @@ impl DNA {
     pub fn from_slice(s: &[u8]) -> DNA {
         let mut seq = Vec::new();
         seq.extend_from_slice(s);
-        DNA { seq: seq }
+
+        DNA { seq: s.iter().cloned().collect() }
     }
 
     pub fn from_str(s: &str) -> DNA {
@@ -31,12 +32,12 @@ impl DNA {
     }
 
     pub fn as_str(&self) -> &str {
-        str::from_utf8(&self.seq).unwrap()
+        str::from_utf8(self.seq.as_slice()).unwrap()
     }
 
     pub fn complement(&self) -> DNA {
         let seq = self.seq.iter()
-            .map(self::complement)
+            .map(|&x| self::complement(x))
             .collect();
         DNA { seq: seq }
     }
@@ -62,15 +63,14 @@ impl DNA {
     }
 }
 
-pub fn complement(nuc: &u8) -> u8 {
-    let c = match *nuc as char {
-        'A' => 'T',
-        'T' => 'A',
-        'G' => 'C',
-        'C' => 'G',
+fn complement(nuc: u8) -> u8 {
+    match nuc {
+        A => T,
+        T => A,
+        G => C,
+        C => G,
         x => panic!("Unsupported NUC: {}", x)
-    };
-    c as u8
+    }
 }
 
 #[cfg(test)]

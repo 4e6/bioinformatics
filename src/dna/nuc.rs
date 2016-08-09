@@ -1,63 +1,55 @@
 use std::str;
 
 /// Nucleic Acid Code
+#[repr(u8)]
+#[derive(Copy, Clone, PartialOrd, PartialEq, Eq, Ord)]
 pub enum NUC {
-    A, C, G, T, U
+    A = 'A' as u8,
+    C = 'C' as u8,
+    G = 'G' as u8,
+    T = 'T' as u8
 }
 
 
 impl NUC {
 
-    // TODO: make parseable ???
-    // c.parse::<NUC>()
-    pub fn from_char(c: char) -> NUC {
+    pub fn to_utf8(nuc: NUC) -> u8 {
+        nuc as u8
+    }
+
+    pub fn from_utf8(x: u8) -> NUC {
         use self::NUC::*;
-        match c {
+        match x as char {
             'A' => A,
             'C' => C,
             'G' => G,
             'T' => T,
-            'U' => U,
-            x => panic!("Unsupported NUC: {}", x)
+            _ => panic!("Unsupported NUC: {}", x)
         }
     }
 
-    pub fn to_char(nuc: &NUC) -> char {
+    pub fn complement(nuc: NUC) -> NUC {
         use self::NUC::*;
-        match *nuc {
-            A => 'A',
-            C => 'C',
-            G => 'G',
-            T => 'T',
-            U => 'U'
-        }
-    }
-
-    pub fn to_utf8(nuc: &NUC) -> u8 {
-        NUC::to_char(nuc) as u8
-    }
-
-    pub fn complement(nuc: &NUC) -> NUC {
-        use self::NUC::*;
-        match *nuc {
+        match nuc {
             A => T,
             T => A,
             G => C,
             C => G,
-            U => U
         }
     }
 
 }
+
+#[derive(PartialOrd, PartialEq, Eq, Ord)]
 pub struct DNA {
-    pub seq: Vec<NUC>
+    seq: Vec<NUC>
 }
 
 impl DNA {
 
     pub fn from_slice(s: &[u8]) -> DNA {
-        let seq = s.iter()
-            .map(|x| NUC::from_char(*x as char))
+        let seq = s.iter().cloned()
+            .map(NUC::from_utf8)
             .collect();
         DNA { seq: seq }
     }
@@ -70,33 +62,48 @@ impl DNA {
         self.seq.len()
     }
 
-    // pub fn to_utf8(&self) -> Vec<u8> {
-    //     self.seq.iter().clone()
-    //         .map(|x| NUC::to_utf8(x))
-    //         .collect()
-    // }
+    pub fn into_seq(self) -> Vec<NUC> {
+        self.seq
+    }
+
+    pub fn as_slice(&self) -> &[NUC] {
+        self.seq.as_slice()
+    }
+
+    pub fn to_utf8(&self) -> Vec<u8> {
+        self.seq.iter().cloned()
+            .map(NUC::to_utf8)
+            .collect()
+    }
 
     pub fn to_string(&self) -> String {
-        let seq = self.seq.iter()
-            .map(|x| NUC::to_char(x) as u8)
-            .collect();
-        String::from_utf8(seq).unwrap()
+        unsafe { String::from_utf8_unchecked(self.to_utf8()) }
     }
 
     // pub fn as_str(&self) -> &str {
-    //     let v = self.to_utf8();
-    //     str::from_utf8(v.as_slice()).unwrap()
+    //     //let v = self.to_utf8();
+    //     str::from_utf8(self.seq.as_slice()).unwrap()
     // }
 
-    pub fn complement(&self) -> DNA {
-        let seq = self.seq.iter()
-            .map(|x| NUC::complement(x))
+    pub fn to_complement(&self) -> DNA {
+        let cmp = self.seq.iter().cloned()
+            .map(NUC::complement)
             .collect();
-        DNA { seq: seq }
+        DNA { seq: cmp }
     }
 
     pub fn reverse(&mut self) {
         self.seq.reverse();
+    }
+
+    pub fn find<F>(&self, pattern: &DNA, p: F) -> (Vec<usize>, Vec<&[NUC]>)
+        where F: Fn(&[NUC], &[NUC]) -> bool {
+
+        self.seq
+            .windows(pattern.len())
+            .enumerate()
+            .filter(|&(_, w)| p(w, pattern.as_slice()))
+            .unzip()
     }
 }
 
@@ -108,13 +115,13 @@ mod tests {
     static SEQ_STRING: &'static str = "ACTATGCGACT";
 
     #[test]
-    fn test_from_str() {
+    fn from_str() {
         let dna = DNA::from_str(SEQ_STRING);
         assert_eq!(SEQ_STRING.to_string(), dna.to_string());
     }
 
     #[test]
-    fn test_from_slice() {
+    fn from_slice() {
         let bytes = SEQ_STRING.as_bytes();
         let dna = DNA::from_slice(bytes);
         assert_eq!(SEQ_STRING.to_string(), dna.to_string());
