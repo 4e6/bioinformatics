@@ -1,7 +1,9 @@
 # Bioinformatics
 
 Programming assignments for the
-[Coursera Bioinformatics][coursera-bioinformatics] course.
+[Coursera Bioinformatics][coursera-bioinformatics] course. Each assignment
+implemented as a separate executable, that read input data from `stdin` and
+write result to `stdout`.
 
 ## Build
 

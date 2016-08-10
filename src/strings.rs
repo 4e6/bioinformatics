@@ -55,6 +55,7 @@ pub fn frequent_words(text: &str, k: usize) -> Vec<&str> {
     res
 }
 
+/// find most frequent k-mers with mismatches in a string.
 pub fn frequent_words_with_mismatches(text: &str, k: usize, d: usize) -> Vec<String> {
     let mut res = HashSet::new();
     let len = 4usize.pow(k as u32);
@@ -79,7 +80,7 @@ pub fn frequent_words_with_mismatches(text: &str, k: usize, d: usize) -> Vec<Str
     res.into_iter().collect()
 }
 
-/// all distinct k-me rs in lexicographical order
+/// all distinct k-mers in lexicographical order
 pub fn kmers(text: &str, k: usize) -> Vec<&str> {
     let mut res = Vec::new();
     for i in 0..text.len()-k+1 {
