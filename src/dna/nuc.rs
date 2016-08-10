@@ -1,3 +1,4 @@
+use std::mem;
 use std::str;
 
 /// Nucleic Acid Code
@@ -28,6 +29,10 @@ impl NUC {
         }
     }
 
+    pub unsafe fn from_utf8_unchecked(x: u8) -> NUC {
+        mem::transmute(x)
+    }
+
     pub fn complement(nuc: NUC) -> NUC {
         use self::NUC::*;
         match nuc {
@@ -39,6 +44,7 @@ impl NUC {
     }
 
 }
+
 
 #[derive(PartialOrd, PartialEq, Eq, Ord)]
 pub struct DNA {
@@ -54,8 +60,17 @@ impl DNA {
         DNA { seq: seq }
     }
 
+    pub unsafe fn from_slice_unchecked(s: &[u8]) -> DNA {
+        let seq: &[NUC] = mem::transmute(s);
+        DNA { seq: seq.to_vec() }
+    }
+
     pub fn from_str(s: &str) -> DNA {
         DNA::from_slice(s.as_bytes())
+    }
+
+    pub unsafe fn from_str_unchecked(s: &str) -> DNA {
+        DNA::from_slice_unchecked(s.as_bytes())
     }
 
     pub fn len(&self) -> usize {
@@ -74,6 +89,10 @@ impl DNA {
         self.seq.iter().cloned()
             .map(NUC::to_utf8)
             .collect()
+    }
+
+    pub unsafe fn to_utf8_unchecked(&self) -> &[u8] {
+        mem::transmute(self.seq.as_slice())
     }
 
     pub fn to_string(&self) -> String {
@@ -112,19 +131,45 @@ mod tests {
 
     use super::DNA;
 
-    static SEQ_STRING: &'static str = "ACTATGCGACT";
+    static SEQ: &'static str = "ACTATGCGACT";
 
     #[test]
     fn from_str() {
-        let dna = DNA::from_str(SEQ_STRING);
-        assert_eq!(SEQ_STRING.to_string(), dna.to_string());
+        let dna = DNA::from_str(SEQ);
+        assert_eq!(SEQ.to_string(), dna.to_string());
+    }
+
+    #[test]
+    fn from_str_unchecked() {
+        let dna = unsafe { DNA::from_str_unchecked(SEQ) };
+        assert_eq!(SEQ.to_string(), dna.to_string());
     }
 
     #[test]
     fn from_slice() {
-        let bytes = SEQ_STRING.as_bytes();
+        let bytes = SEQ.as_bytes();
         let dna = DNA::from_slice(bytes);
-        assert_eq!(SEQ_STRING.to_string(), dna.to_string());
+        assert_eq!(SEQ.to_string(), dna.to_string());
+    }
+
+    #[test]
+    fn from_slice_unchecked() {
+        let bytes = SEQ.as_bytes();
+        let dna = unsafe { DNA::from_slice_unchecked(bytes) };
+        assert_eq!(SEQ.to_string(), dna.to_string())
+    }
+
+    #[test]
+    fn to_utf8() {
+        let dna = DNA::from_str(SEQ);
+        assert_eq!(SEQ.as_bytes().to_owned(), dna.to_utf8());
+    }
+
+    #[test]
+    fn to_utf8_unchecked() {
+        let dna = DNA::from_str(SEQ);
+        let dna_bytes = unsafe { dna.to_utf8_unchecked() };
+        assert_eq!(SEQ.as_bytes(), dna_bytes);
     }
 
 }
