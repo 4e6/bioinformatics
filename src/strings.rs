@@ -1,6 +1,13 @@
 //! Utilities to work with strings
 //!
 
+use std::collections::HashSet;
+
+static A: &'static str = "A";
+static T: &'static str = "T";
+static G: &'static str = "G";
+static C: &'static str = "C";
+
 /// Returns byte indexes of the first character of this string slice that
 /// matches the pattern.
 ///
@@ -46,6 +53,30 @@ pub fn frequent_words(text: &str, k: usize) -> Vec<&str> {
     res.sort();
     res.dedup();
     res
+}
+
+pub fn frequent_words_with_mismatches(text: &str, k: usize, d: usize) -> Vec<String> {
+    let mut res = HashSet::new();
+    let len = 4usize.pow(k as u32);
+    let mut close = vec![0; len];
+
+    for i in 0..text.len()-k+1 {
+        let neighborhood = self::neighbors(&text[i..i+k], d);
+        for pattern in neighborhood {
+            let index = pattern_to_number(pattern.as_bytes());
+            close[index] += 1;
+        }
+    }
+
+    let max_count = *close.iter().max().unwrap();
+    for i in 0..len-1 {
+        if close[i] == max_count {
+            let pattern = number_to_pattern(i, k);
+            res.insert(pattern);
+        }
+    }
+
+    res.into_iter().collect()
 }
 
 /// all distinct k-me rs in lexicographical order
@@ -199,30 +230,30 @@ pub fn hamming_distance(xs: &str, ys: &str) -> usize {
 }
 
 pub fn neighbors(pattern: &str, d: usize) -> Vec<String> {
-    let nucs = ["A".to_string(), "C".to_string(), "G".to_string(), "T".to_string()];
-    let mut res = Vec::new();
+    let mut res = HashSet::new();
     if d == 0 {
-        res.push(pattern.to_string());
-        res
+        res.insert(pattern.to_string());
+        res.into_iter().collect()
     } else if pattern.len() == 1 {
-        res.extend_from_slice(&nucs);
-        res
+        res.insert(A.to_owned());
+        res.insert(T.to_owned());
+        res.insert(G.to_owned());
+        res.insert(C.to_owned());
+        res.into_iter().collect()
     } else {
         let tail = &pattern[1..];
         let suffix = neighbors(tail, d);
         for text in suffix.iter() {
             if hamming_distance(tail, text) < d {
-                res.push("A".to_owned() + text);
-                res.push("C".to_owned() + text);
-                res.push("G".to_owned() + text);
-                res.push("T".to_owned() + text);
+                res.insert(A.to_owned() + text);
+                res.insert(T.to_owned() + text);
+                res.insert(G.to_owned() + text);
+                res.insert(C.to_owned() + text);
             } else {
                 let h = pattern[0..1].to_owned();
-                res.push(h + text);
+                res.insert(h + text);
             }
         }
-        res.sort();
-        res.dedup();
-        res
+        res.into_iter().collect()
     }
 }

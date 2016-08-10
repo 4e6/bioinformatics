@@ -14,7 +14,9 @@ fn main() {
     bio::io::read_line(&mut d_string);
     let d = d_string.parse::<usize>().unwrap();
 
-    let res = neighbors(&pattern, d);
+    let mut res = neighbors(&pattern, d);
+    // sort to be able to compare with saved result
+    res.sort();
 
     bio::io::println_vec(&res);
 }
