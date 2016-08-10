@@ -5,6 +5,8 @@ pub const T: u8 = 'T' as u8;
 pub const G: u8 = 'G' as u8;
 pub const C: u8 = 'C' as u8;
 
+// static NUCS: &'static [u8] = &[A, T, G, C];
+
 pub struct DNA {
     pub seq: Vec<u8>
 }
@@ -16,10 +18,7 @@ impl DNA {
     }
 
     pub fn from_slice(s: &[u8]) -> DNA {
-        let mut seq = Vec::new();
-        seq.extend_from_slice(s);
-
-        DNA { seq: s.iter().cloned().collect() }
+        DNA { seq: s.to_vec() }
     }
 
     pub fn from_str(s: &str) -> DNA {
@@ -61,6 +60,8 @@ impl DNA {
             .filter(|&(_, w)| p(w, pat))
             .unzip()
     }
+
+
 }
 
 fn complement(nuc: u8) -> u8 {
@@ -70,6 +71,31 @@ fn complement(nuc: u8) -> u8 {
         G => C,
         C => G,
         x => panic!("Unsupported NUC: {}", x)
+    }
+}
+
+// pub fn neighbors(pattern: &DNA, d: usize) -> Vec<DNA> {
+//     let mut res = Vec::new();
+//     if d == 0 {
+//         res.push(pattern.clone());
+//         res
+//     } else if pattern.len() == 1 {
+//         res.extend(NUCS.iter().cloned().map(|n| DNA { seq: vec![n] }));
+//         res
+//     } else {
+//         let tail = &pattern.seq[1..];
+//         let suffix_res = neighbors(&DNA { seq: tail.to_vec() }, d);
+//         res
+//     }
+// }
+
+impl Clone for DNA {
+    fn clone(&self) -> Self {
+        DNA { seq: self.seq.clone() }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.seq.clone_from(&source.seq);
     }
 }
 

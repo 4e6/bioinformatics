@@ -25,3 +25,9 @@ pub fn print_vec<T: Display>(v: &[T]) {
     }
     println!("");
 }
+
+pub fn println_vec<T: Display>(v: &[T]) {
+    for r in v.iter() {
+        println!("{}", r);
+    }
+}

@@ -197,3 +197,32 @@ pub fn hamming_distance(xs: &str, ys: &str) -> usize {
         if x == y { acc } else { acc + 1 }
     })
 }
+
+pub fn neighbors(pattern: &str, d: usize) -> Vec<String> {
+    let nucs = ["A".to_string(), "C".to_string(), "G".to_string(), "T".to_string()];
+    let mut res = Vec::new();
+    if d == 0 {
+        res.push(pattern.to_string());
+        res
+    } else if pattern.len() == 1 {
+        res.extend_from_slice(&nucs);
+        res
+    } else {
+        let tail = &pattern[1..];
+        let suffix = neighbors(tail, d);
+        for text in suffix.iter() {
+            if hamming_distance(tail, text) < d {
+                res.push("A".to_owned() + text);
+                res.push("C".to_owned() + text);
+                res.push("G".to_owned() + text);
+                res.push("T".to_owned() + text);
+            } else {
+                let h = pattern[0..1].to_owned();
+                res.push(h + text);
+            }
+        }
+        res.sort();
+        res.dedup();
+        res
+    }
+}
