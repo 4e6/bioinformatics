@@ -80,6 +80,33 @@ pub fn frequent_words_with_mismatches(text: &str, k: usize, d: usize) -> Vec<Str
     res.into_iter().collect()
 }
 
+pub fn frequent_words_with_mismatches_and_reverse_complements(text: &str, k: usize, d: usize) -> Vec<String> {
+    let mut res = HashSet::new();
+    let len = 4usize.pow(k as u32);
+    let mut close = vec![0; len];
+
+    for i in 0..text.len()-k+1 {
+        let kmer = &text[i..i+k];
+        let rkmer = reverse_complement(kmer);
+        let n1 = self::neighbors(kmer, d);
+        let n2 = self::neighbors(&rkmer, d);
+        for pattern in n1.iter().chain(n2.iter()) {
+            let index = pattern_to_number(pattern.as_bytes());
+            close[index] += 1;
+        }
+    }
+
+    let max_count = *close.iter().max().unwrap();
+    for i in 0..len-1 {
+        if close[i] == max_count {
+            let pattern = number_to_pattern(i, k);
+            res.insert(pattern);
+        }
+    }
+
+    res.into_iter().collect()
+}
+
 /// all distinct k-mers in lexicographical order
 pub fn kmers(text: &str, k: usize) -> Vec<&str> {
     let mut res = Vec::new();
@@ -257,4 +284,8 @@ pub fn neighbors(pattern: &str, d: usize) -> Vec<String> {
         }
         res.into_iter().collect()
     }
+}
+
+fn reverse_complement(text: &str) -> String {
+    super::dna::u8::DNA::from_str(text).reverse_complement().to_string()
 }
