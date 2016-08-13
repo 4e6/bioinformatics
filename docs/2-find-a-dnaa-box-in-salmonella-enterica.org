@@ -1,0 +1,162 @@
+#+OPTIONS: toc:nil ^:nil
+
+* Find a DnaA protein in Salmonella enterica
+
+  This article is a part of [[http://example.com][Bioinformatics with Rust]] series based on my progress
+  in the [[https://www.coursera.org/specializations/bioinformatics][Coursera Bioinformatics]] course.
+
+** DnaA
+
+   /DnaA/ is a protein that activates DNA replication in bacteria. DNA
+   replication starts in a particular region of genome sequence called /origin
+   of replication/ or just /ori/.
+
+   To find the key protein will use the following strategy. First, we need to
+   locate the origin of replication, /ori/ in the DNA sequence. Then we will
+   analyze the /ori/ region in order to find the common repeated pattern which
+   will indicate the /DnaA/ sequence.
+
+** Ori
+
+   Let's look at the input data, the genome of Salmonella enterica:
+
+   #+BEGIN_SRC sh :exports both :results value verbatim
+     head -n5 ../data/Salmonella_enterica.txt
+   #+END_SRC
+
+   #+RESULTS:
+   : >gi|16758993|ref|NC_003198.1| Salmonella enterica subsp. enterica serovar Typhi str. CT18 chromosome, complete genome
+   : AGAGATTACGTCTGGTTGCAAGAGATCATAACAGGGGAAATTGATTGAAAATAAATATATCGCCAGCAGC
+   : ACATGAACAAGTTTCGGAATGTGATCAATTTAAAAATTTATTGACTTAGGCGGGCAGATACTTTAACCAA
+   : TATAGGAATACAAGACAGACAAATAAAAATGACAGAGTACACAACATCCATGAACCGCATCAGCACCACC
+   : ACCATTACCACCATCACCATTACCACAGGTAACGGTGCGGGCTGACGCGTACAGGAAACACAGAAAAAAG
+
+   This is [[https://en.wikipedia.org/wiki/FASTA_format][FASTA format]], where the first line is a comment with the description
+   of dataset, and the rest of the lines is DNA sequence.
+
+   #+BEGIN_SRC sh :exports both
+     wc -c ../data/Salmonella_enterica.txt
+   #+END_SRC
+
+   #+RESULTS:
+   : 4877856 ../data/Salmonella_enterica.txt
+
+   We need to find the origin of replication /ori/ of size about 1000
+   nucleotides in a 5 million long DNA sequence. In order to find it will
+   analyze the DNA given some knowledge, namely the deamination process.
+
+** Deamination
+
+   During the replication, cytosine /C/ has a tendency to mutate into thymine
+   /T/ through a process called /deamination/. This process leads to a decrease
+   in cytosine /C/ on the forward half-strand. And since /C-G/ base pairs
+   eventually change into /T-A/ base pairs, deamination results in the
+   decrease in guanine /G/ on the reverse half-strand.
+
+   Then we can introduce the /G/ to /C/ ratio. According to deamination process,
+   when moving along the DNA sequence, /G/ to /C/ should decrease when we
+   approaching the /ori/ and start increasing when we just passed it.
+
+** GC Skew
+
+   With deamination in mind, we'll implement /gc_skew/ function, which counts
+   guanine /G/ to cytosine /C/ ratio. The /ori/ should be located in the minimum
+   of /gc_skew/, when function stops decreasing and starts increasing.
+
+   #+BEGIN_SRC rust
+     pub fn gc_skew<'a>(genome: &'a str) -> Box<Iterator<Item=isize> + 'a> {
+         let iter = genome
+             .chars()
+             .scan(0, |acc, c| {
+                 *acc = match c {
+                     'G' => *acc + 1,
+                     'C' => *acc - 1,
+                     _ => *acc
+                 };
+                 Some(*acc)
+             });
+         Box::new(iter)
+     }
+   #+END_SRC
+
+   #+RESULTS:
+
+   Function that finds minimum value of a sequence as well as its indices:
+
+   #+BEGIN_SRC rust
+     pub fn min_indices<I: Iterator<Item=isize>>(iter: I) -> (isize, Vec<usize>) {
+         let mut inds = Vec::new();
+         let mut min = isize::max_value();
+
+         for (i, x) in iter.enumerate() {
+             if x < min {
+                 inds = vec![i];
+                 min = x;
+             } else if x == min {
+                 inds.push(i);
+             }
+         }
+
+         (min, inds)
+     }
+   #+END_SRC
+
+   #+RESULTS:
+
+   There is [[file:../examples/minimum_skew.rs][minimum_skew.rs]] executable that read DNA sequence from ~stdin~,
+   build /skew/ function and output the position of its minimum.
+
+   Let's run ~minimum_skew~ on Salmonella genome:
+
+   #+NAME: min_skew
+   #+BEGIN_SRC sh :exports both
+     tail -n +2 ../data/Salmonella_enterica.txt | # skip comment
+         tr -d '\n' | # join dataset into single line
+         cargo run --release --example minimum_skew
+   #+END_SRC
+
+   The output is two (but very close) local minimums of the /skew/ function.
+
+   #+RESULTS: min_skew
+   : 3764856 3764858
+
+   It means that we've found the position of replication origin in the
+   Salmonella genome.
+
+** Frequent subsequences
+
+   /DnaA/ protein is a frequently repeated 9-mer string in the origin of
+   replication. But looking for exact matches is not enough, because of
+   mutations its copies can differ in one chromosome.
+
+   Then using the [[file:../examples/frequent_words_with_mismatches_and_reverse_complements.rs][frequent_words_with_mismatches_and_reverse_complements.rs]]
+   executable we look for the frequent common subsequences of length 9 that
+   could mismatch in 1 character. Executable expects two input lines from
+   ~stdin~, the DNA sequence and the integer parameters:
+
+   #+NAME: dnaa
+   #+BEGIN_SRC sh :exports both :var min_skew=min_skew
+     ORIGINS=( $min_skew ) # read to array
+     ori=${ORIGINS[0]}     # get first
+     { tail -n +2 ../data/Salmonella_enterica.txt | # skip comment
+             tr -d '\n' | # join dataset into single line
+             cut -c$((ori-499))-$((ori+501)); # extract the ori region
+       echo '9 1'; # subsequence of 9 chars with 1 mismatch
+     } | cargo run --release --example frequent_words_with_mismatches_and_reverse_complements
+   #+END_SRC
+
+   It results in /DnaA/ box, the sequence and its reverse complement.
+
+   #+RESULTS: dnaa
+   : TTATCCACA TGTGGATAA
+
+   We've found the protein that activates replication of /Salmonella enterica/
+   bacteria.
+
+* Footnotes
+
+[fn:1] https://en.wikipedia.org/wiki/DnaA
+
+# Local Variables:
+# eval: (org-babel-do-load-languages 'org-babel-load-languages '((rust . t)(sh . t)))
+# End:
