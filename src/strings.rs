@@ -2,6 +2,8 @@
 //!
 
 use std::collections::HashSet;
+use std::iter::Scan;
+use std::str::Chars;
 
 static A: &'static str = "A";
 static T: &'static str = "T";
@@ -228,8 +230,9 @@ pub fn clump_finding(genome: &str, k: usize, l: usize, t: usize) -> Vec<String> 
     res
 }
 
-pub fn skew(genome: &str) -> Vec<isize> {
-    genome.chars()
+pub fn gc_skew<'a>(genome: &'a str) -> Box<Iterator<Item=isize> + 'a> {
+    let iter = genome
+        .chars()
         .scan(0, |acc, c| {
             *acc = match c {
                 'G' => *acc + 1,
@@ -237,17 +240,41 @@ pub fn skew(genome: &str) -> Vec<isize> {
                 _ => *acc
             };
             Some(*acc)
-        }).collect()
+        });
+    Box::new(iter)
 }
 
-pub fn skew_min(skew: &[isize]) -> Vec<usize> {
-    let &min = skew.iter().min().unwrap();
-    let (idx, _): (Vec<usize>, Vec<isize>) = skew
-        .iter()
-        .enumerate()
-        .filter(|&(_, &x)| x == min)
-        .unzip();
-    idx
+pub fn gc_skew_scan<'a>(genome: &'a str) -> Scan<Chars<'a>, isize, fn(&mut isize, char) -> Option<isize>> {
+
+    fn skew_fn(acc: &mut isize, c: char) -> Option<isize> {
+        *acc = match c {
+            'G' => *acc + 1,
+            'C' => *acc - 1,
+            _ => *acc
+        };
+        Some(*acc)
+    }
+
+    genome
+        .chars()
+        .scan(0, skew_fn)
+
+}
+
+pub fn min_indices<I: Iterator<Item=isize>>(iter: I) -> (isize, Vec<usize>) {
+    let mut inds = Vec::new();
+    let mut min = isize::max_value();
+
+    for (i, x) in iter.enumerate() {
+        if x < min {
+            inds = vec![i];
+            min = x;
+        } else if x == min {
+            inds.push(i);
+        }
+    }
+
+    (min, inds)
 }
 
 pub fn hamming_distance(xs: &str, ys: &str) -> usize {
