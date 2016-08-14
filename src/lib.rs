@@ -1,3 +1,8 @@
+#![feature(test)]
+
+extern crate test;
+
+pub mod data;
 pub mod dna;
 pub mod io;
 pub mod strings;
@@ -26,10 +31,32 @@ pub fn hamming_distance<T: PartialEq>(xs: &[T], ys: &[T]) -> usize {
 #[cfg(test)]
 mod tests {
 
+    use test;
+    use test::Bencher;
+
+    use data::Dataset;
+
+    static DX: &'static str = "GGGCCGTTGGT";
+    static DY: &'static str = "GGACCGTTGAC";
+
     #[test]
-    fn hamming_distance() {
-        let xs = "GGGCCGTTGGT";
-        let ys = "GGACCGTTGAC";
-        assert_eq!(super::hamming_distance(xs.as_bytes(), ys.as_bytes()), 3);
+    fn test_hamming_distance() {
+        assert_eq!(super::hamming_distance(DX.as_bytes(), DY.as_bytes()), 3);
     }
+
+
+    #[bench]
+    fn bench_hamming_distance(b: &mut Bencher) {
+        let (bx, by) = (test::black_box(DX.as_bytes()), test::black_box(DY.as_bytes()));
+        b.iter(|| super::hamming_distance(bx, by));
+    }
+
+    #[bench]
+    fn bench_hamming_distance_dataset(b: &mut Bencher) {
+        let dataset = Dataset::open("hamming_distance", "dataset_9_3.txt");
+        let lines: Vec<_> = dataset.lines().collect();
+        let (da, db) = (test::black_box(lines[0].as_bytes()), test::black_box(lines[1].as_bytes()));
+        b.iter(|| super::hamming_distance(da, db))
+    }
+
 }
