@@ -25,7 +25,7 @@ impl NUC {
             'C' => C,
             'G' => G,
             'T' => T,
-            _ => panic!("Unsupported NUC: {}", x)
+            c => panic!("Unsupported NUC: '{}'", c)
         }
     }
 
@@ -48,21 +48,21 @@ impl NUC {
 
 #[derive(PartialOrd, PartialEq, Eq, Ord)]
 pub struct DNA {
-    seq: Vec<NUC>
+    vec: Vec<NUC>
 }
 
 impl DNA {
 
     pub fn from_slice(s: &[u8]) -> DNA {
-        let seq = s.iter().cloned()
+        let vec = s.iter().cloned()
             .map(NUC::from_utf8)
             .collect();
-        DNA { seq: seq }
+        DNA { vec: vec }
     }
 
     pub unsafe fn from_slice_unchecked(s: &[u8]) -> DNA {
-        let seq: &[NUC] = mem::transmute(s);
-        DNA { seq: seq.to_vec() }
+        let vec: &[NUC] = mem::transmute(s);
+        DNA { vec: vec.to_vec() }
     }
 
     pub fn from_str(s: &str) -> DNA {
@@ -74,51 +74,61 @@ impl DNA {
     }
 
     pub fn len(&self) -> usize {
-        self.seq.len()
+        self.vec.len()
     }
 
-    pub fn into_seq(self) -> Vec<NUC> {
-        self.seq
+    pub fn into_vec(self) -> Vec<NUC> {
+        self.vec
     }
 
     pub fn as_slice(&self) -> &[NUC] {
-        self.seq.as_slice()
+        self.vec.as_slice()
     }
 
     pub fn to_utf8(&self) -> Vec<u8> {
-        self.seq.iter().cloned()
+        self.vec.iter().cloned()
             .map(NUC::to_utf8)
             .collect()
     }
 
     pub unsafe fn to_utf8_unchecked(&self) -> &[u8] {
-        mem::transmute(self.seq.as_slice())
+        mem::transmute(self.vec.as_slice())
     }
 
     pub fn to_string(&self) -> String {
         unsafe { String::from_utf8_unchecked(self.to_utf8()) }
     }
 
+    pub unsafe fn into_string_unchecked(self) -> String {
+        String::from_utf8_unchecked(mem::transmute(self.vec))
+    }
+
     // pub fn as_str(&self) -> &str {
     //     //let v = self.to_utf8();
-    //     str::from_utf8(self.seq.as_slice()).unwrap()
+    //     str::from_utf8(self.vec.as_slice()).unwrap()
     // }
 
-    pub fn to_complement(&self) -> DNA {
-        let cmp = self.seq.iter().cloned()
+    pub fn complement(&self) -> DNA {
+        let cmp = self.vec.iter().cloned()
             .map(NUC::complement)
             .collect();
-        DNA { seq: cmp }
+        DNA { vec: cmp }
     }
 
     pub fn reverse(&mut self) {
-        self.seq.reverse();
+        self.vec.reverse();
+    }
+
+    pub fn reverse_complement(&self) -> DNA {
+        let mut comp = self.complement();
+        comp.reverse();
+        comp
     }
 
     pub fn find<F>(&self, pattern: &DNA, p: F) -> (Vec<usize>, Vec<&[NUC]>)
         where F: Fn(&[NUC], &[NUC]) -> bool {
 
-        self.seq
+        self.vec
             .windows(pattern.len())
             .enumerate()
             .filter(|&(_, w)| p(w, pattern.as_slice()))
@@ -129,47 +139,83 @@ impl DNA {
 #[cfg(test)]
 mod tests {
 
-    use super::DNA;
+    use test::Bencher;
 
-    static SEQ: &'static str = "ACTATGCGACT";
+    use super::DNA;
+    use data::Dataset;
+
+    static SAMPLE: &'static str = "ACTATGCGACT";
+    static COMPLEMENT: &'static str = "TGATACGCTGA";
 
     #[test]
     fn from_str() {
-        let dna = DNA::from_str(SEQ);
-        assert_eq!(SEQ.to_string(), dna.to_string());
+        let dna = DNA::from_str(SAMPLE);
+        assert_eq!(SAMPLE.to_string(), dna.to_string());
     }
 
     #[test]
     fn from_str_unchecked() {
-        let dna = unsafe { DNA::from_str_unchecked(SEQ) };
-        assert_eq!(SEQ.to_string(), dna.to_string());
+        let dna = unsafe { DNA::from_str_unchecked(SAMPLE) };
+        assert_eq!(SAMPLE.to_string(), dna.to_string());
     }
 
     #[test]
     fn from_slice() {
-        let bytes = SEQ.as_bytes();
+        let bytes = SAMPLE.as_bytes();
         let dna = DNA::from_slice(bytes);
-        assert_eq!(SEQ.to_string(), dna.to_string());
+        assert_eq!(SAMPLE.to_string(), dna.to_string());
     }
 
     #[test]
     fn from_slice_unchecked() {
-        let bytes = SEQ.as_bytes();
+        let bytes = SAMPLE.as_bytes();
         let dna = unsafe { DNA::from_slice_unchecked(bytes) };
-        assert_eq!(SEQ.to_string(), dna.to_string())
+        assert_eq!(SAMPLE.to_string(), dna.to_string())
     }
 
     #[test]
     fn to_utf8() {
-        let dna = DNA::from_str(SEQ);
-        assert_eq!(SEQ.as_bytes().to_owned(), dna.to_utf8());
+        let dna = DNA::from_str(SAMPLE);
+        assert_eq!(SAMPLE.as_bytes().to_owned(), dna.to_utf8());
     }
 
     #[test]
     fn to_utf8_unchecked() {
-        let dna = DNA::from_str(SEQ);
+        let dna = DNA::from_str(SAMPLE);
         let dna_bytes = unsafe { dna.to_utf8_unchecked() };
-        assert_eq!(SEQ.as_bytes(), dna_bytes);
+        assert_eq!(SAMPLE.as_bytes(), dna_bytes);
     }
 
+    #[test]
+    fn into_string_unchecked() {
+        let dna = DNA::from_str(SAMPLE);
+        assert_eq!(SAMPLE.to_owned(), unsafe { dna.into_string_unchecked() })
+    }
+
+    #[test]
+    fn reverse_complement() {
+        let dna = DNA::from_str(SAMPLE);
+        let reverse_complement: String = COMPLEMENT.chars().rev().collect();
+        assert_eq!(reverse_complement, dna.reverse_complement().to_string());
+    }
+
+    #[bench]
+    fn bench_from_str(b: &mut Bencher) {
+        let dataset = Dataset::open_fasta("data/Salmonella_enterica.txt");
+        b.iter(|| DNA::from_str(dataset.contents()));
+    }
+
+    #[bench]
+    fn bench_from_str_unchecked(b: &mut Bencher) {
+        let dataset = Dataset::open_fasta("data/Salmonella_enterica.txt");
+        b.iter(|| unsafe { DNA::from_str_unchecked(dataset.contents()) });
+    }
+
+    #[bench]
+    fn bench_reverse_complement(b: &mut Bencher) {
+        let dataset = Dataset::open_text("data/reverse_complement/dataset_3_2.txt");
+        let lines = dataset.lines();
+        let dna = DNA::from_str(lines[0]);
+        b.iter(|| dna.reverse_complement())
+    }
 }
