@@ -1,4 +1,5 @@
 use std::str;
+use std::ops::Deref;
 
 pub const A: u8 = 'A' as u8;
 pub const T: u8 = 'T' as u8;
@@ -7,18 +8,15 @@ pub const C: u8 = 'C' as u8;
 
 // static NUCS: &'static [u8] = &[A, T, G, C];
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Dna {
-    pub seq: Vec<u8>,
+    vec: Vec<u8>,
 }
 
 impl Dna {
 
-    pub fn len(&self) -> usize {
-        self.seq.len()
-    }
-
     pub fn from_slice(s: &[u8]) -> Dna {
-        Dna { seq: s.to_vec() }
+        Dna { vec: s.to_vec() }
     }
 
     pub fn from_str(s: &str) -> Dna {
@@ -27,22 +25,30 @@ impl Dna {
     }
 
     pub fn to_string(&self) -> String {
-        String::from_utf8(self.seq.clone()).unwrap()
+        unsafe { String::from_utf8_unchecked(self.vec.clone()) }
     }
 
     pub fn as_str(&self) -> &str {
-        str::from_utf8(self.seq.as_slice()).unwrap()
+        unsafe { str::from_utf8_unchecked(&self.vec) }
+    }
+
+    pub fn as_slice(&self) -> &[u8] {
+        self
+    }
+
+    pub fn len(&self) -> usize {
+        self.vec.len()
     }
 
     pub fn complement(&self) -> Dna {
-        let seq = self.seq.iter()
+        let vec = self.vec.iter()
             .map(|&x| self::complement(x))
             .collect();
-        Dna { seq: seq }
+        Dna { vec: vec }
     }
 
     pub fn reverse(&mut self) {
-        self.seq.reverse();
+        self.vec.reverse();
     }
 
     pub fn reverse_complement(&self) -> Dna {
@@ -53,8 +59,8 @@ impl Dna {
 
     pub fn find<F>(&self, pattern: &Dna, p: F) -> (Vec<usize>, Vec<&[u8]>)
         where F: Fn(&[u8], &[u8]) -> bool {
-        let pat = pattern.seq.as_slice();
-        self.seq
+        let pat = pattern.vec.as_slice();
+        self.vec
             .windows(pat.len())
             .enumerate()
             .filter(|&(_, w)| p(w, pat))
@@ -70,7 +76,7 @@ fn complement(nuc: u8) -> u8 {
         T => A,
         G => C,
         C => G,
-        x => panic!("Unsupported NUC: {}", x)
+        x => panic!("Unsupported NUC: {}", x),
     }
 }
 
@@ -80,22 +86,36 @@ fn complement(nuc: u8) -> u8 {
 //         res.push(pattern.clone());
 //         res
 //     } else if pattern.len() == 1 {
-//         res.extend(NUCS.iter().cloned().map(|n| Dna { seq: vec![n] }));
+//         res.extend(NUCS.iter().cloned().map(|n| Dna { vec: vec![n] }));
 //         res
 //     } else {
-//         let tail = &pattern.seq[1..];
-//         let suffix_res = neighbors(&Dna { seq: tail.to_vec() }, d);
+//         let tail = &pattern.vec[1..];
+//         let suffix_res = neighbors(&Dna { vec: tail.to_vec() }, d);
 //         res
 //     }
 // }
 
+impl Deref for Dna {
+    type Target = [u8];
+
+    fn deref(&self) -> &[u8] {
+        &self.vec
+    }
+}
+
 impl Clone for Dna {
     fn clone(&self) -> Self {
-        Dna { seq: self.seq.clone() }
+        Dna { vec: self.vec.clone() }
     }
 
     fn clone_from(&mut self, source: &Self) {
-        self.seq.clone_from(&source.seq);
+        self.vec.clone_from(&source.vec);
+    }
+}
+
+impl AsRef<[u8]> for Dna {
+    fn as_ref(&self) -> &[u8] {
+        &self
     }
 }
 
@@ -104,25 +124,25 @@ mod tests {
 
     use super::Dna;
 
-    static SEQ_STRING: &'static str = "ACTATGCGACT";
+    static SAMPLE: &'static str = "ACTATGCGACT";
 
     #[test]
     fn test_from_str() {
-        let dna = Dna::from_str(SEQ_STRING);
-        assert_eq!(SEQ_STRING.to_string(), dna.to_string());
+        let dna = Dna::from_str(SAMPLE);
+        assert_eq!(SAMPLE.to_string(), dna.to_string());
     }
 
     #[test]
     fn test_from_slice() {
-        let bytes = SEQ_STRING.as_bytes();
+        let bytes = SAMPLE.as_bytes();
         let dna = Dna::from_slice(bytes);
-        assert_eq!(SEQ_STRING.to_string(), dna.to_string());
+        assert_eq!(SAMPLE.to_string(), dna.to_string());
     }
 
     #[test]
     fn test_as_str() {
-        let dna = Dna::from_str(SEQ_STRING);
-        assert_eq!(SEQ_STRING, dna.as_str());
+        let dna = Dna::from_str(SAMPLE);
+        assert_eq!(SAMPLE, dna.as_str());
     }
 
     #[test]
