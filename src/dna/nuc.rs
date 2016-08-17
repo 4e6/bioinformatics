@@ -53,6 +53,10 @@ pub struct Dna {
 
 impl Dna {
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Dna construction
+    ////////////////////////////////////////////////////////////////////////////
+
     pub fn from_slice(s: &[u8]) -> Dna {
         let vec = s.iter().cloned()
             .map(Nuc::from_utf8)
@@ -73,15 +77,15 @@ impl Dna {
         Dna::from_slice_unchecked(s.as_bytes())
     }
 
-    pub fn len(&self) -> usize {
-        self.vec.len()
-    }
+    ////////////////////////////////////////////////////////////////////////////
+    // Dna conversion
+    ////////////////////////////////////////////////////////////////////////////
 
-    pub fn into_vec(self) -> Vec<Nuc> {
-        self.vec
-    }
+    // fn into_vec(self) -> Vec<Nuc> {
+    //     self.vec
+    // }
 
-    pub fn as_slice(&self) -> &[Nuc] {
+    fn as_slice(&self) -> &[Nuc] {
         self.vec.as_slice()
     }
 
@@ -99,14 +103,18 @@ impl Dna {
         unsafe { String::from_utf8_unchecked(self.to_utf8()) }
     }
 
-    pub unsafe fn into_string_unchecked(self) -> String {
-        String::from_utf8_unchecked(mem::transmute(self.vec))
+    pub unsafe fn to_string_unchecked(&self) -> String {
+        let vec: Vec<u8> = mem::transmute(self.vec.clone());
+        String::from_utf8_unchecked(vec)
     }
 
-    // pub fn as_str(&self) -> &str {
-    //     //let v = self.to_utf8();
-    //     str::from_utf8(self.vec.as_slice()).unwrap()
-    // }
+    ////////////////////////////////////////////////////////////////////////////
+    // Public functions
+    ////////////////////////////////////////////////////////////////////////////
+
+    pub fn len(&self) -> usize {
+        self.vec.len()
+    }
 
     pub fn complement(&self) -> Dna {
         let cmp = self.vec.iter().cloned()
@@ -136,13 +144,14 @@ impl Dna {
     }
 }
 
-#[cfg(test)]
+#[cfg(ignore)]
 mod tests {
 
     use test::Bencher;
 
     use super::Dna;
     use data::Dataset;
+    use hamming_distance;
 
     static SAMPLE: &'static str = "ACTATGCGACT";
     static COMPLEMENT: &'static str = "TGATACGCTGA";
@@ -187,9 +196,9 @@ mod tests {
     }
 
     #[test]
-    fn into_string_unchecked() {
+    fn to_string_unchecked() {
         let dna = Dna::from_str(SAMPLE);
-        assert_eq!(SAMPLE.to_owned(), unsafe { dna.into_string_unchecked() })
+        assert_eq!(SAMPLE.to_owned(), unsafe { dna.to_string_unchecked() })
     }
 
     #[test]
@@ -212,10 +221,34 @@ mod tests {
     }
 
     #[bench]
+    fn bench_to_string(b: &mut Bencher) {
+        let dataset = Dataset::open_fasta("data/Salmonella_enterica.txt");
+        let dna = unsafe { Dna::from_str_unchecked(dataset.contents()) };
+        b.iter(move || dna.to_string());
+    }
+
+    #[bench]
+    fn bench_to_string_unchecked(b: &mut Bencher) {
+        let dataset = Dataset::open_fasta("data/Salmonella_enterica.txt");
+        let dna = unsafe { Dna::from_str_unchecked(dataset.contents()) };
+        b.iter(|| unsafe { dna.to_string_unchecked() });
+    }
+
+    #[bench]
     fn bench_reverse_complement(b: &mut Bencher) {
         let dataset = Dataset::open_text("data/reverse_complement/dataset_3_2.txt");
         let lines = dataset.lines();
         let dna = Dna::from_str(lines[0]);
         b.iter(|| dna.reverse_complement())
+    }
+
+    #[bench]
+    fn bench_find(b: &mut Bencher) {
+        let dataset = Dataset::open_text("data/approximate_pattern_count/dataset_9_6.txt");
+        let lines = dataset.lines();
+        let pat = unsafe { Dna::from_str_unchecked(lines[0]) };
+        let dna = unsafe { Dna::from_str_unchecked(lines[1]) };
+        let d = lines[2].parse::<usize>().unwrap();
+        b.iter(|| dna.find(&pat, |chunk, pat| hamming_distance(chunk, pat) <= d))
     }
 }

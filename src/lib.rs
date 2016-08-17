@@ -44,15 +44,8 @@ mod tests {
         assert_eq!(super::hamming_distance(DX.as_bytes(), DY.as_bytes()), 3);
     }
 
-
     #[bench]
     fn bench_hamming_distance(b: &mut Bencher) {
-        let (bx, by) = (test::black_box(DX.as_bytes()), test::black_box(DY.as_bytes()));
-        b.iter(|| super::hamming_distance(bx, by));
-    }
-
-    #[bench]
-    fn bench_hamming_distance_dataset(b: &mut Bencher) {
         let dataset = Dataset::open_text("data/hamming_distance/dataset_9_3.txt");
         let lines = dataset.lines();
         let (da, db) = (test::black_box(lines[0].as_bytes()), test::black_box(lines[1].as_bytes()));
