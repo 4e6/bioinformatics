@@ -1,7 +1,7 @@
 extern crate bio;
 
 use bio::hamming_distance;
-use bio::dna::u8::DNA;
+use bio::dna::u8::Dna;
 
 /// Code Challenge: Implement ﻿ApproximatePatternCount.
 /// Input: Strings Pattern and Text as well as an integer d.
@@ -15,8 +15,8 @@ fn main() {
     bio::io::read_line(&mut dna_string);
     bio::io::read_line(&mut d_string);
 
-    let pattern = DNA::from_str(&pattern_string);
-    let dna = DNA::from_str(&dna_string);
+    let pattern = Dna::from_str(&pattern_string);
+    let dna = Dna::from_str(&dna_string);
     let d = d_string.parse::<usize>().unwrap();
 
     let (indices, _) = dna.find(&pattern, |chunk, pat| hamming_distance(chunk, pat) <= d);
