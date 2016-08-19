@@ -1,7 +1,7 @@
 extern crate bio;
 
 use bio::hamming_distance;
-use bio::dna::u8::Dna;
+use bio::u8::Dna;
 
 /// Approximate Pattern Matching Problem: Find all approximate occurrences of a pattern in a string.
 /// Input: Strings Pattern and Text along with an integer d.

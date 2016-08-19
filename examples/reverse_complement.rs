@@ -1,6 +1,6 @@
 extern crate bio;
 
-use bio::dna::u8::Dna;
+use bio::u8::Dna;
 
 /// Reverse Complement Problem: Find the reverse complement of a Dna string.
 /// Input: A Dna string Pattern.

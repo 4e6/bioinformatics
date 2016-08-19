@@ -2,14 +2,16 @@
 
 extern crate test;
 
-pub mod data;
-pub mod dna;
-pub mod io;
+pub mod adt;
+pub mod u8;
 pub mod strings;
+
+pub mod data;
+pub mod io;
 
 use std::cmp::PartialEq;
 
-use dna::u8::Dna;
+use u8::Dna;
 
 /// find occurrences of pattern in dna
 /// return vector of starting positions of pattern in dna

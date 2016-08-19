@@ -1,6 +1,6 @@
 extern crate bio;
 
-use bio::dna::u8::Dna;
+use bio::u8::Dna;
 
 /// Code Challenge: Solve the Pattern Matching Problem.
 /// Input: Two strings, Pattern and Genome.

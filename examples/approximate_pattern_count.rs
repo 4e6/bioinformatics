@@ -1,9 +1,9 @@
 extern crate bio;
 
 use bio::hamming_distance;
-use bio::dna::u8::Dna;
+use bio::u8::Dna;
 
-/// Code Challenge: Implement ﻿ApproximatePatternCount.
+/// Code Challenge: Implement ApproximatePatternCount.
 /// Input: Strings Pattern and Text as well as an integer d.
 /// Output: Countd(Text, Pattern).
 fn main() {
