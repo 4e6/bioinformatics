@@ -6,6 +6,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::str::FromStr;
 
 pub struct Dataset {
     contents: String,
@@ -32,6 +33,10 @@ impl Dataset {
 
     pub fn contents(&self) -> &str {
         self.contents.as_str()
+    }
+
+    pub fn parse<T: FromStr>(&self) -> Result<T, T::Err> {
+        self.contents.trim().parse::<T>()
     }
 
     pub fn lines(&self) -> Vec<&str> {

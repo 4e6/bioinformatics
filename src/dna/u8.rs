@@ -67,8 +67,9 @@ impl Dna {
             .unzip()
     }
 
-
 }
+
+// Utilities
 
 fn complement(nuc: u8) -> u8 {
     match nuc {
@@ -123,6 +124,9 @@ impl AsRef<[u8]> for Dna {
 mod tests {
 
     use super::Dna;
+    use data::Dataset;
+
+    use test::Bencher;
 
     static SAMPLE: &'static str = "ACTATGCGACT";
 
@@ -152,5 +156,13 @@ mod tests {
         let mut comp = dna.complement();
         comp.reverse();
         assert_eq!(comp.to_string(), reverse_complement.to_string())
+    }
+
+    #[bench]
+    fn bench_find(b: &mut Bencher) {
+        let dataset = Dataset::open_text("data/pattern_count/dataset_2_7.txt");
+        let lines = dataset.lines();
+        let (text, pattern) = (Dna::from_str(lines[0]), Dna::from_str(lines[1]));
+        b.iter(|| text.find(&pattern, |x,  y| x == y));
     }
 }

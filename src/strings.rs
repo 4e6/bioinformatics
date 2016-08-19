@@ -316,3 +316,28 @@ pub fn neighbors(pattern: &str, d: usize) -> Vec<String> {
 fn reverse_complement(text: &str) -> String {
     super::dna::u8::Dna::from_str(text).reverse_complement().to_string()
 }
+
+#[cfg(test)]
+mod tests {
+
+    use test::Bencher;
+
+    use data::Dataset;
+
+    #[test]
+    fn test_indexes() {
+        let answer = Dataset::open_text("data/pattern_count/dataset_2_7.out");
+        let dataset = Dataset::open_text("data/pattern_count/dataset_2_7.txt");
+        let lines = dataset.lines();
+        let (text, pattern) = (lines[0], lines[1]);
+        assert_eq!(super::indexes(text, pattern).len(), answer.parse::<usize>().unwrap());
+    }
+
+    #[bench]
+    fn bench_indexes(b: &mut Bencher) {
+        let dataset = Dataset::open_text("data/pattern_count/dataset_2_7.txt");
+        let lines = dataset.lines();
+        let (text, pattern) = (lines[0], lines[1]);
+        b.iter(|| super::indexes(text, pattern));
+    }
+}
