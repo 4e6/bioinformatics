@@ -1,6 +1,6 @@
 extern crate bio;
 
-use bio::strings::pattern_count;
+use bio::u8::find;
 
 /// 1.2 Hidden Messages in the Replication Origin
 ///
@@ -14,6 +14,6 @@ fn main() {
     bio::io::read_line(&mut text);
     bio::io::read_line(&mut pat);
 
-    let res = pattern_count(&text, &pat);
-    println!("{}", res);
+    let count = find(text.as_bytes(), pat.as_bytes()).len();
+    println!("{}", count);
 }

@@ -1,3 +1,5 @@
+//! Dna abstraction over a byte vector
+
 use std::str;
 use std::ops::Deref;
 
@@ -57,14 +59,10 @@ impl Dna {
         comp
     }
 
-    pub fn find<F>(&self, pattern: &Dna, p: F) -> (Vec<usize>, Vec<&[u8]>)
+    pub fn find<F>(&self, pattern: &Dna, compare: F) -> (Vec<usize>, Vec<&[u8]>)
         where F: Fn(&[u8], &[u8]) -> bool {
-        let pat = pattern.vec.as_slice();
-        self.vec
-            .windows(pat.len())
-            .enumerate()
-            .filter(|&(_, w)| p(w, pat))
-            .unzip()
+
+        super::find_by(&self.vec, &pattern.vec, compare)
     }
 
 }
@@ -80,21 +78,6 @@ fn complement(nuc: u8) -> u8 {
         x => panic!("Unsupported NUC: {}", x),
     }
 }
-
-// pub fn neighbors(pattern: &Dna, d: usize) -> Vec<Dna> {
-//     let mut res = Vec::new();
-//     if d == 0 {
-//         res.push(pattern.clone());
-//         res
-//     } else if pattern.len() == 1 {
-//         res.extend(NUCS.iter().cloned().map(|n| Dna { vec: vec![n] }));
-//         res
-//     } else {
-//         let tail = &pattern.vec[1..];
-//         let suffix_res = neighbors(&Dna { vec: tail.to_vec() }, d);
-//         res
-//     }
-// }
 
 impl Deref for Dna {
     type Target = [u8];
@@ -124,9 +107,6 @@ impl AsRef<[u8]> for Dna {
 mod tests {
 
     use super::Dna;
-    use data::Dataset;
-
-    use test::Bencher;
 
     static SAMPLE: &'static str = "ACTATGCGACT";
 
@@ -158,11 +138,4 @@ mod tests {
         assert_eq!(comp.to_string(), reverse_complement.to_string())
     }
 
-    #[bench]
-    fn bench_find(b: &mut Bencher) {
-        let dataset = Dataset::open_text("data/pattern_count/dataset_2_7.txt");
-        let lines = dataset.lines();
-        let (text, pattern) = (Dna::from_str(lines[0]), Dna::from_str(lines[1]));
-        b.iter(|| text.find(&pattern, |x,  y| x == y));
-    }
 }

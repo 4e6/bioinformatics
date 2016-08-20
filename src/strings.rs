@@ -1,5 +1,7 @@
-//! Utilities to work with strings
+//! Algorithms from Bioinformatics course.
 //!
+//! Algorithms from the course usually described in terms of arrays and indexed
+//! access. Modules `u8` and `adt` contains proper implementation.
 
 use std::collections::HashSet;
 use std::iter::Scan;
@@ -14,8 +16,9 @@ static C: &'static str = "C";
 /// matches the pattern.
 ///
 /// # Panics
+///
 /// All characters should be `u8` ASCII
-pub fn indexes(text: &str, pat: &str) -> Vec<usize> {
+fn indexes(text: &str, pat: &str) -> Vec<usize> {
     let mut res = Vec::new();
     for i in 0..text.len()-pat.len()+1 {
         if &text[i..i+pat.len()] == pat {
@@ -25,7 +28,7 @@ pub fn indexes(text: &str, pat: &str) -> Vec<usize> {
     res
 }
 
-pub fn pattern_count(text: &str, pat: &str) -> usize {
+fn pattern_count(text: &str, pat: &str) -> usize {
     self::indexes(text, pat).len()
 }
 

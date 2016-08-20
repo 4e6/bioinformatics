@@ -1,6 +1,6 @@
 extern crate bio;
 
-use bio::u8::Dna;
+use bio::u8::find;
 
 /// Code Challenge: Solve the Pattern Matching Problem.
 /// Input: Two strings, Pattern and Genome.
@@ -8,15 +8,12 @@ use bio::u8::Dna;
 /// positions where Pattern appears as a substring of Genome.
 fn main() {
 
-    let mut pat_string = String::new();
-    let mut dna_string = String::new();
-    bio::io::read_line(&mut pat_string);
-    bio::io::read_line(&mut dna_string);
+    let mut pat = String::new();
+    let mut dna = String::new();
+    bio::io::read_line(&mut pat);
+    bio::io::read_line(&mut dna);
 
-    let pat = Dna::from_str(&pat_string);
-    let dna = Dna::from_str(&dna_string);
+    let inds = find(dna.as_bytes(), pat.as_bytes());
 
-    let res = bio::find(dna, pat);
-
-    bio::io::print_vec(&res);
+    bio::io::print_vec(&inds);
 }
