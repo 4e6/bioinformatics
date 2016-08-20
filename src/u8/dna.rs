@@ -1,6 +1,7 @@
-//! Dna abstraction over a byte vector
+//! Abstractions to work with DNA sequences.
 
 use std::str;
+use std::fmt;
 use std::ops::Deref;
 
 pub const A: u8 = 'A' as u8;
@@ -10,7 +11,24 @@ pub const C: u8 = 'C' as u8;
 
 // static NUCS: &'static [u8] = &[A, T, G, C];
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+/// DNA abstraction over a byte vector.
+///
+/// # Examples
+///
+/// `Dna` implements `Deref` to a slice `&[u8]`, so it is possible to call
+/// slice methods directly on `Dna`:
+///
+/// ```
+/// use bio::u8::Dna;
+///
+/// let dna = Dna::from_str("AATG");
+/// let mut kmers = dna.windows(2);
+///
+/// assert_eq!(kmers.next(), Some("AA".as_bytes()));
+/// assert_eq!(kmers.next(), Some("AT".as_bytes()));
+/// assert_eq!(kmers.next(), Some("TG".as_bytes()));
+/// ```
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Dna {
     vec: Vec<u8>,
 }
@@ -32,10 +50,6 @@ impl Dna {
 
     pub fn as_str(&self) -> &str {
         unsafe { str::from_utf8_unchecked(&self.vec) }
-    }
-
-    pub fn as_slice(&self) -> &[u8] {
-        self
     }
 
     pub fn len(&self) -> usize {
@@ -79,14 +93,6 @@ fn complement(nuc: u8) -> u8 {
     }
 }
 
-impl Deref for Dna {
-    type Target = [u8];
-
-    fn deref(&self) -> &[u8] {
-        &self.vec
-    }
-}
-
 impl Clone for Dna {
     fn clone(&self) -> Self {
         Dna { vec: self.vec.clone() }
@@ -97,9 +103,23 @@ impl Clone for Dna {
     }
 }
 
+impl Deref for Dna {
+    type Target = [u8];
+
+    fn deref(&self) -> &[u8] {
+        &self.vec
+    }
+}
+
 impl AsRef<[u8]> for Dna {
     fn as_ref(&self) -> &[u8] {
         &self
+    }
+}
+
+impl fmt::Display for Dna {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self.as_str(), f)
     }
 }
 
