@@ -97,6 +97,27 @@ pub fn median_string(dnas: &[Dna], k: usize) -> Dna {
     median
 }
 
+/// Compute probabilities of k-mers based on given probability distribution.
+pub fn kmer_probabilities(dna: &Dna, k: usize, pa: &[f64], pc: &[f64], pg: &[f64], pt: &[f64]) -> Vec<(f64, Dna)> {
+    dna.windows(k)
+        .map(|kmer| (profile(kmer, pa, pc, pg, pt), Dna::from_slice(kmer)))
+        .collect()
+}
+
+/// Return probability of `dna` sequence occurrence given probability
+/// distribution for A, C, G and T nucleotides.
+fn profile(dna: &[u8], pa: &[f64], pc: &[f64], pg: &[f64], pt: &[f64]) -> f64 {
+    dna.iter()
+        .enumerate()
+        .fold(1f64, |acc, (i, &c)| match c {
+            dna::A => acc * pa[i],
+            dna::C => acc * pc[i],
+            dna::G => acc * pg[i],
+            dna::T => acc * pt[i],
+            _ => panic!("Unsupported character {}", c as char),
+        })
+}
+
 /// Returns distance between `pattern` and DNA strings `dnas`
 fn distance(dnas: &[Dna], pattern: &Dna) -> usize {
     let k = pattern.len();
