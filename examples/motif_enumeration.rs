@@ -10,9 +10,9 @@ use bio::u8::{Dna, motif_enumeration};
 /// Output: All (k, d)-motifs in Dna.
 fn main() {
 
-    let filename = env::args().nth(1).unwrap();
+    let file_name = env::args().nth(1).unwrap();
 
-    let data = Dataset::open_text(filename);
+    let data = Dataset::open_text(file_name);
     let lines = data.lines();
     let (hd, tl) = lines.split_first().unwrap();
     let kd: Vec<usize> = hd

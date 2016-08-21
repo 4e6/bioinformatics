@@ -10,7 +10,7 @@ pub const T: u8 = b'T';
 pub const G: u8 = b'G';
 pub const C: u8 = b'C';
 
-// static NUCS: &'static [u8] = &[A, T, G, C];
+pub static NUCS: &'static [u8; 4] = &[A, T, G, C];
 
 /// DNA abstraction over a byte vector.
 ///
@@ -35,6 +35,10 @@ pub struct Dna {
 }
 
 impl Dna {
+
+    pub fn new(vec: Vec<u8>) -> Dna {
+        Dna { vec: vec }
+    }
 
     pub fn from_slice(s: &[u8]) -> Dna {
         Dna { vec: s.to_vec() }

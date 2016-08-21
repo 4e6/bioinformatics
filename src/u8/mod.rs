@@ -5,7 +5,7 @@ pub mod dna;
 use std::collections::HashSet;
 
 pub use self::dna::Dna;
-use ::hamming_distance;
+use ::{hamming_distance, permutations_with_repetitions};
 
 static A: [u8; 1] = [b'A'];
 static T: [u8; 1] = [b'T'];
@@ -82,6 +82,40 @@ pub fn motif_enumeration(dnas: &[Dna], k: usize, d: usize) -> HashSet<Dna> {
     motifs
 }
 
+/// Returns median of length `k` for the vector of DNA strings `dnas`.
+pub fn median_string(dnas: &[Dna], k: usize) -> Dna {
+    let mut d = usize::max_value();
+    let mut median = Dna::new(vec![]);
+    for kmer in permutations_with_repetitions(dna::NUCS, k) {
+        let pattern = Dna::new(kmer);
+        let dk_distance = distance(dnas, &pattern);
+        if d > dk_distance {
+            d = dk_distance;
+            median = pattern;
+        }
+    }
+    median
+}
+
+/// Returns distance between `pattern` and DNA strings `dnas`
+fn distance(dnas: &[Dna], pattern: &Dna) -> usize {
+    let k = pattern.len();
+    let mut distance = 0;
+
+    for dna in dnas.iter() {
+        let mut h = usize::max_value();
+        for kmer in dna.windows(k) {
+            let d = hamming_distance(&pattern, kmer);
+            if h > d {
+                h = d;
+            }
+        }
+        distance += h;
+    }
+
+    distance
+}
+
 /// Returns the concatenation of two slices.
 fn add(xs: &[u8], ys: &[u8]) -> Vec<u8> {
     let mut v = Vec::with_capacity(xs.len() + ys.len());
@@ -95,7 +129,18 @@ mod tests {
 
     use test::Bencher;
 
+    use super::Dna;
     use data::Dataset;
+
+    #[test]
+    fn distance() {
+        let pattern = Dna::from_str_unchecked("AAA");
+        let dnas: Vec<_> = ["TTACCTTAAC", "GATATCTGTC", "ACGGCGTTCG", "CCCTAAAGAG", "CGTCAGAGGT"]
+            .iter()
+            .map(|x| Dna::from_str_unchecked(x))
+            .collect();
+        assert_eq!(super::distance(&dnas, &pattern), 5);
+    }
 
     #[bench]
     fn bench_find_by(b: &mut Bencher) {
