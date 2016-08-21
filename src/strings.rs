@@ -317,7 +317,7 @@ pub fn neighbors(pattern: &str, d: usize) -> Vec<String> {
 }
 
 fn reverse_complement(text: &str) -> String {
-    super::u8::Dna::from_str(text).reverse_complement().to_string()
+    super::u8::Dna::from_str_unchecked(text).reverse_complement().to_string()
 }
 
 #[cfg(test)]

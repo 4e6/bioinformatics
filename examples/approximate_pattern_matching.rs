@@ -15,8 +15,8 @@ fn main() {
     bio::io::read_line(&mut dna_string);
     bio::io::read_line(&mut d_string);
 
-    let pattern = Dna::from_str(&pattern_string);
-    let dna = Dna::from_str(&dna_string);
+    let pattern = pattern_string.parse::<Dna>().unwrap();
+    let dna = dna_string.parse::<Dna>().unwrap();
     let d = d_string.parse::<usize>().unwrap();
 
     let (indices, _) = dna.find(&pattern, |chunk, pat| hamming_distance(chunk, pat) <= d);

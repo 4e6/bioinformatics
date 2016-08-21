@@ -19,7 +19,9 @@ fn main() {
         .split_whitespace()
         .map(|x| x.parse::<usize>().unwrap())
         .collect();
-    let dnas: Vec<Dna> = tl.iter().map(|x| Dna::from_str(x)).collect();
+    let dnas: Vec<Dna> = tl.iter()
+        .map(|x| Dna::from_str_unchecked(x))
+        .collect();
 
     let motifs = motif_enumeration(&dnas, kd[0], kd[1]);
     let mut res: Vec<Dna> = motifs.into_iter().collect();
