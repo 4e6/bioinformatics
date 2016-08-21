@@ -89,7 +89,7 @@ fn complement(nuc: u8) -> u8 {
         T => A,
         G => C,
         C => G,
-        x => panic!("Unsupported NUC: {}", x),
+        x => x,
     }
 }
 

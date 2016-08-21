@@ -34,12 +34,6 @@ pub fn find_by<'a, 'b, F>(text: &'a [u8], pattern: &'b [u8], compare: F) -> (Vec
 
 /// Returns all permutations of `text` within Hamming distance of `d`.
 pub fn neighbors(text: &[u8], d: usize) -> Vec<Text> {
-    fn add(xs: &[u8], ys: &[u8]) -> Vec<u8> {
-        let mut v = Vec::with_capacity(xs.len() + ys.len());
-        v.extend(xs.iter().cloned());
-        v.extend(ys.iter().cloned());
-        v
-    }
     let mut res = HashSet::new();
     if d == 0 {
         res.insert(text.to_vec());
@@ -86,6 +80,14 @@ pub fn motif_enumeration(dnas: &[Dna], k: usize, d: usize) -> HashSet<Dna> {
         }
     }
     motifs
+}
+
+/// Returns the concatenation of two slices.
+fn add(xs: &[u8], ys: &[u8]) -> Vec<u8> {
+    let mut v = Vec::with_capacity(xs.len() + ys.len());
+    v.extend(xs.iter().cloned());
+    v.extend(ys.iter().cloned());
+    v
 }
 
 #[cfg(test)]

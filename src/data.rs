@@ -6,41 +6,41 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::str::FromStr;
+use std::str;
 
 pub struct Dataset {
-    contents: String,
+    pub bytes: Vec<u8>,
 }
 
 impl Dataset {
 
     pub fn open_text<P: AsRef<Path>>(path: P) -> Dataset {
         let mut file = Dataset::open_file(path);
-        let mut contents = String::new();
-        file.read_to_string(&mut contents).unwrap();
-        Dataset { contents: contents }
+        let mut contents = Vec::new();
+        file.read_to_end(&mut contents).unwrap();
+        Dataset { bytes: contents }
     }
 
     pub fn open_fasta<P: AsRef<Path>>(path: P) -> Dataset {
         let raw = Dataset::open_text(path);
-        let lines = raw.contents
+        let lines = raw.contents()
             .lines()
             .skip(1)
             .fold(String::with_capacity(10usize.pow(7)), |s, line| s + line);
 
-        Dataset { contents: lines }
+        Dataset { bytes: lines.into_bytes() }
     }
 
     pub fn contents(&self) -> &str {
-        self.contents.as_str()
+        unsafe { str::from_utf8_unchecked(self.bytes.as_ref()) }
     }
 
-    pub fn parse<T: FromStr>(&self) -> Result<T, T::Err> {
-        self.contents.trim().parse::<T>()
+    pub fn parse<T: str::FromStr>(&self) -> Result<T, T::Err> {
+        self.contents().trim().parse::<T>()
     }
 
     pub fn lines(&self) -> Vec<&str> {
-        self.contents.lines().collect()
+        self.contents().lines().collect()
     }
 
     fn open_file<P: AsRef<Path>>(path: P) -> File {
