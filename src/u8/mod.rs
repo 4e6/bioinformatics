@@ -3,6 +3,7 @@
 pub mod dna;
 
 use std::collections::HashSet;
+use std::f64;
 
 pub use self::dna::Dna;
 use ::{hamming_distance, permutations_with_repetitions};
@@ -98,10 +99,17 @@ pub fn median_string(dnas: &[Dna], k: usize) -> Dna {
 }
 
 /// Compute probabilities of k-mers based on given probability distribution.
-pub fn kmer_probabilities(dna: &Dna, k: usize, pa: &[f64], pc: &[f64], pg: &[f64], pt: &[f64]) -> Vec<(f64, Dna)> {
-    dna.windows(k)
-        .map(|kmer| (profile(kmer, pa, pc, pg, pt), Dna::from_slice(kmer)))
-        .collect()
+pub fn kmer_probabilities<'a>(dna: &'a Dna, k: usize, pa: &'a [f64], pc: &'a [f64], pg: &'a [f64], pt: &'a [f64]) -> Box<Iterator<Item = (f64, Dna)> + 'a> {
+    let it = dna.windows(k)
+        .map(move |kmer| (profile(kmer, pa, pc, pg, pt), Dna::from_slice(kmer)));
+    Box::new(it)
+}
+
+/// Search for a kmer DNA with highest probability given input
+/// `probabilities` vector.
+pub fn most_probable_kmer(dna: &Dna, k: usize, pa: &[f64], pc: &[f64], pg: &[f64], pt: &[f64]) -> (f64, Dna) {
+    kmer_probabilities(dna, k, pa, pc, pg, pt)
+        .fold((f64::MIN, Dna::new(vec![])), |(acc, d), (score, dna)| if score > acc { (score, dna) } else { (acc, d) } )
 }
 
 /// Greedy algorithm for motif finding.
@@ -119,11 +127,8 @@ pub fn greedy_motif_search(dnas: &[Dna], k: usize, t: usize) -> Vec<Dna> {
             let pg = make_profile_n(dna::G, &motifs);
             let pt = make_profile_n(dna::T, &motifs);
 
-            let mut ps = kmer_probabilities(&dna, k, &pa, &pc, &pg, &pt);
-            ps.sort_by(|&(fa, _), &(fb, _)| fb.partial_cmp(&fa).unwrap());
-            let (_, ref most_probable) = ps[0];
-
-            motifs.push(Dna::from_slice(most_probable));
+            let (_, most_probable) = most_probable_kmer(&dna, k, &pa, &pc, &pg, &pt);
+            motifs.push(most_probable);
         }
         if score(&motifs) < score(&best_motifs) {
             best_motifs = motifs;

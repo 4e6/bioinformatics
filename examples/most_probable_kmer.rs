@@ -4,7 +4,7 @@ use std::env;
 use std::str;
 
 use bio::data::Dataset;
-use bio::u8::{Dna, kmer_probabilities};
+use bio::u8::{Dna, most_probable_kmer};
 
 fn parse_vec<T: str::FromStr>(s: &str) -> Result<Vec<T>, T::Err> {
     s.split_whitespace()
@@ -34,9 +34,7 @@ fn main() {
     let pg = parse_vec::<f64>(&lines[4]).unwrap();
     let pt = parse_vec::<f64>(&lines[5]).unwrap();
 
-    let mut profile = kmer_probabilities(&dna, k, &pa, &pc, &pg, &pt);
-    profile.sort_by(|&(fa, _), &(fb, _)| fb.partial_cmp(&fa).unwrap());
-    let (_, ref kmer) = profile[0];
+    let (_, kmer) = most_probable_kmer(&dna, k, &pa, &pc, &pg, &pt);
 
     println!("{}", kmer);
 }
