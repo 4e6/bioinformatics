@@ -104,18 +104,95 @@ pub fn kmer_probabilities(dna: &Dna, k: usize, pa: &[f64], pc: &[f64], pg: &[f64
         .collect()
 }
 
+/// Greedy algorithm for motif finding.
+pub fn greedy_motif_search(dnas: &[Dna], k: usize, t: usize) -> Vec<Dna> {
+    assert_eq!(dnas.len(), t);
+    let mut best_motifs: Vec<_> = dnas.iter()
+        .map(|dna| Dna::from_slice(&dna[0..k]))
+        .collect();
+
+    for kmer in dnas[0].windows(k) {
+        let mut motifs = vec![Dna::from_slice(kmer)];
+        for dna in dnas[1..].iter() {
+            let pa = make_profile_n(dna::A, &motifs);
+            let pc = make_profile_n(dna::C, &motifs);
+            let pg = make_profile_n(dna::G, &motifs);
+            let pt = make_profile_n(dna::T, &motifs);
+
+            let mut ps = kmer_probabilities(&dna, k, &pa, &pc, &pg, &pt);
+            ps.sort_by(|&(fa, _), &(fb, _)| fb.partial_cmp(&fa).unwrap());
+            let (_, ref most_probable) = ps[0];
+
+            motifs.push(Dna::from_slice(most_probable));
+        }
+        if score(&motifs) < score(&best_motifs) {
+            best_motifs = motifs;
+        }
+    }
+
+    best_motifs
+}
+
+/// Return score, as a cumulative Hamming distance between `consensus`
+/// string for `motifs` matrix and `motifs` matrix itself.
+fn score(motifs: &[Dna]) -> usize {
+    let cs = consensus(motifs);
+    distance(motifs, &cs)
+}
+
+/// Return profile vector for nucleotide `n`. Where `profile[i]` is a frequency
+/// of nucleotide `n` in the `i`-th column of matrix `motifs`.
+fn make_profile_n(n: u8, motifs: &[Dna]) -> Vec<f64> {
+    let l = motifs.len();
+    let mut profile: Vec<f64> = vec![0.; motifs[0].len()];
+
+    for motif in motifs.iter() {
+        for (p, m) in profile.iter_mut().zip(motif.iter()) {
+            if *m == n {
+                *p += 1.;
+            }
+        }
+    }
+
+    for p in profile.iter_mut() {
+        *p = *p / l as f64;
+    }
+
+    profile
+}
+
 /// Return probability of `dna` sequence occurrence given probability
 /// distribution for A, C, G and T nucleotides.
 fn profile(dna: &[u8], pa: &[f64], pc: &[f64], pg: &[f64], pt: &[f64]) -> f64 {
     dna.iter()
         .enumerate()
-        .fold(1f64, |acc, (i, &c)| match c {
+        .fold(1., |acc, (i, &c)| match c {
             dna::A => acc * pa[i],
             dna::C => acc * pc[i],
             dna::G => acc * pg[i],
             dna::T => acc * pt[i],
             _ => panic!("Unsupported character {}", c as char),
         })
+}
+
+/// Return consensus DNA string from the most popular letters in each column of
+/// the motif matrix `dnas`.
+fn consensus(dnas: &[Dna]) -> Dna {
+    let mut vec = Vec::new();
+
+    let pa = make_profile_n(dna::A, dnas);
+    let pc = make_profile_n(dna::C, dnas);
+    let pg = make_profile_n(dna::G, dnas);
+    let pt = make_profile_n(dna::T, dnas);
+
+    for i in 0..pa.len() {
+        let mut pp = vec![(dna::A, pa[i]), (dna::C, pc[i]), (dna::G, pg[i]), (dna::T, pt[i])];
+        pp.sort_by(|&(_, fa), &(_, fb)| fb.partial_cmp(&fa).unwrap());
+        let (nuc, _) = pp[0];
+        vec.push(nuc);
+    }
+
+    Dna::new(vec)
 }
 
 /// Returns distance between `pattern` and DNA strings `dnas`
