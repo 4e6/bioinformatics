@@ -113,8 +113,9 @@ pub fn most_probable_kmer(dna: &Dna, k: usize, pa: &[f64], pc: &[f64], pg: &[f64
 }
 
 /// Greedy algorithm for motif finding.
-pub fn greedy_motif_search(dnas: &[Dna], k: usize, t: usize) -> Vec<Dna> {
+pub fn greedy_motif_search(dnas: &[Dna], k: usize, t: usize, with_pseudocounts: bool) -> Vec<Dna> {
     assert_eq!(dnas.len(), t);
+    let update = if with_pseudocounts { avg_laplace } else { avg_simple };
     let mut best_motifs: Vec<_> = dnas.iter()
         .map(|dna| Dna::from_slice(&dna[0..k]))
         .collect();
@@ -122,10 +123,10 @@ pub fn greedy_motif_search(dnas: &[Dna], k: usize, t: usize) -> Vec<Dna> {
     for kmer in dnas[0].windows(k) {
         let mut motifs = vec![Dna::from_slice(kmer)];
         for dna in dnas[1..].iter() {
-            let pa = make_profile_n(dna::A, &motifs);
-            let pc = make_profile_n(dna::C, &motifs);
-            let pg = make_profile_n(dna::G, &motifs);
-            let pt = make_profile_n(dna::T, &motifs);
+            let pa = make_profile_n(dna::A, &motifs, update);
+            let pc = make_profile_n(dna::C, &motifs, update);
+            let pg = make_profile_n(dna::G, &motifs, update);
+            let pt = make_profile_n(dna::T, &motifs, update);
 
             let (_, most_probable) = most_probable_kmer(&dna, k, &pa, &pc, &pg, &pt);
             motifs.push(most_probable);
@@ -147,8 +148,10 @@ fn score(motifs: &[Dna]) -> usize {
 
 /// Return profile vector for nucleotide `n`. Where `profile[i]` is a frequency
 /// of nucleotide `n` in the `i`-th column of matrix `motifs`.
-fn make_profile_n(n: u8, motifs: &[Dna]) -> Vec<f64> {
-    let l = motifs.len();
+fn make_profile_n<F>(n: u8, motifs: &[Dna], update: F) -> Vec<f64>
+    where F: Fn(&mut f64, f64){
+
+    let len = motifs.len();
     let mut profile: Vec<f64> = vec![0.; motifs[0].len()];
 
     for motif in motifs.iter() {
@@ -160,11 +163,20 @@ fn make_profile_n(n: u8, motifs: &[Dna]) -> Vec<f64> {
     }
 
     for p in profile.iter_mut() {
-        *p = *p / l as f64;
+        update(p, len as f64)
     }
 
     profile
 }
+
+/// Updates `p` to an average of `l`. Used as an update function for
+/// `make_profile_n`.
+fn avg_simple(p: &mut f64, l: f64) { *p = *p / l }
+
+/// Updates `p` to a normalized average using Laplace's Rule of
+/// Succession algorithm. Used as an update funiction for
+/// `make_profile_n`
+fn avg_laplace(p: &mut f64, l: f64) { *p = (*p + 1.) / (2. * l) }
 
 /// Return probability of `dna` sequence occurrence given probability
 /// distribution for A, C, G and T nucleotides.
@@ -185,10 +197,10 @@ fn profile(dna: &[u8], pa: &[f64], pc: &[f64], pg: &[f64], pt: &[f64]) -> f64 {
 fn consensus(dnas: &[Dna]) -> Dna {
     let mut vec = Vec::new();
 
-    let pa = make_profile_n(dna::A, dnas);
-    let pc = make_profile_n(dna::C, dnas);
-    let pg = make_profile_n(dna::G, dnas);
-    let pt = make_profile_n(dna::T, dnas);
+    let pa = make_profile_n(dna::A, dnas, avg_simple);
+    let pc = make_profile_n(dna::C, dnas, avg_simple);
+    let pg = make_profile_n(dna::G, dnas, avg_simple);
+    let pt = make_profile_n(dna::T, dnas, avg_simple);
 
     for i in 0..pa.len() {
         let mut pp = vec![(dna::A, pa[i]), (dna::C, pc[i]), (dna::G, pg[i]), (dna::T, pt[i])];

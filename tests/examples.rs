@@ -23,6 +23,23 @@ fn greedy_motif_search() {
 }
 
 #[test]
+fn greedy_motif_search_with_pseudocounts() {
+    let reference = Dataset::open_text("data/greedy_motif_search_with_pseudocounts/dataset_160_9.out");
+    let command = Command::new("cargo")
+        .arg("run")
+        .arg("--release")
+        .arg("--example")
+        .arg("greedy_motif_search")
+        .arg("data/greedy_motif_search_with_pseudocounts/dataset_160_9.dat")
+        .arg("with_pseudocounts")
+        .output()
+        .expect(FAILED_TO_RUN_EXAMPLE);
+
+    assert!(command.status.success());
+    assert_eq!(command.stdout, reference.bytes);
+}
+
+#[test]
 fn most_probable_kmer() {
     let reference = Dataset::open_text("data/most_probable_kmer/dataset_159_3.out");
     let command = Command::new("cargo")

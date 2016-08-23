@@ -13,6 +13,8 @@ use bio::u8::{Dna, greedy_motif_search};
 fn main() {
 
     let file_name = env::args().nth(1).unwrap();
+    let pseudocounts = env::args().nth(2).unwrap_or("none".to_owned());
+    let with_pseudocounts = pseudocounts.ends_with("pseudocounts");
 
     let data = Dataset::open_text(file_name);
     let lines = data.lines();
@@ -24,7 +26,7 @@ fn main() {
         .map(|x| Dna::from_str_unchecked(x))
         .collect();
 
-    let motifs = greedy_motif_search(&dnas, kt[0], kt[1]);
+    let motifs = greedy_motif_search(&dnas, kt[0], kt[1], with_pseudocounts);
     let res: Vec<_> = motifs.iter().map(|x| Dna::from_slice(x)).collect();
     bio::io::println_vec(&res);
 }
