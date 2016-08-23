@@ -171,11 +171,13 @@ fn make_profile_n<F>(n: u8, motifs: &[Dna], update: F) -> Vec<f64>
 
 /// Updates `p` to an average of `l`. Used as an update function for
 /// `make_profile_n`.
+#[inline]
 fn avg_simple(p: &mut f64, l: f64) { *p = *p / l }
 
 /// Updates `p` to a normalized average using Laplace's Rule of
 /// Succession algorithm. Used as an update funiction for
 /// `make_profile_n`
+#[inline]
 fn avg_laplace(p: &mut f64, l: f64) { *p = (*p + 1.) / (2. * l) }
 
 /// Return probability of `dna` sequence occurrence given probability
