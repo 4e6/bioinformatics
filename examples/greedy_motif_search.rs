@@ -26,7 +26,8 @@ fn main() {
         .map(|x| Dna::from_str_unchecked(x))
         .collect();
 
-    let motifs = greedy_motif_search(&dnas, kt[0], kt[1], with_pseudocounts);
+    assert_eq!(dnas.len(), kt[1]);
+    let motifs = greedy_motif_search(&dnas, kt[0], with_pseudocounts);
     let res: Vec<_> = motifs.iter().map(|x| Dna::from_slice(x)).collect();
     bio::io::println_vec(&res);
 }
