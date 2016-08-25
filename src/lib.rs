@@ -54,6 +54,7 @@ pub fn permutations_with_repetitions<'a, T>(xs: &'a [T], n: usize) -> Box<Iterat
 ///
 /// assert_eq!(append(&[1, 2, 3], 0), [1, 2, 3, 0]);
 /// ```
+#[inline]
 pub fn append<T: Clone>(xs: &[T], x: T) -> Vec<T> {
     let mut vec = Vec::with_capacity(xs.len() + 1);
     vec.extend(xs.iter().cloned());
@@ -70,11 +71,31 @@ pub fn append<T: Clone>(xs: &[T], x: T) -> Vec<T> {
 ///
 /// assert_eq!(prepend(0, &[1, 2, 3]), [0, 1, 2, 3]);
 /// ```
+#[inline]
 pub fn prepend<T: Clone>(x: T, xs: &[T]) -> Vec<T> {
     let mut vec = Vec::with_capacity(xs.len() + 1);
     vec.push(x);
     vec.extend(xs.iter().cloned());
     vec
+}
+
+/// Returns concatenation of two slices.
+///
+/// # Example
+///
+/// ```
+/// use bio::add;
+///
+/// let xs = &[1, 2];
+/// let ys = &[3, 4];
+/// assert_eq!(vec![1, 2, 3, 4], add(xs, ys));
+/// ```
+#[inline]
+pub fn add<T: Clone>(xs: &[T], ys: &[T]) -> Vec<T> {
+    let mut v = Vec::with_capacity(xs.len() + ys.len());
+    v.extend(xs.iter().cloned());
+    v.extend(ys.iter().cloned());
+    v
 }
 
 #[cfg(test)]
