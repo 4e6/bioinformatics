@@ -61,6 +61,12 @@ impl Dna {
         unsafe { str::from_utf8_unchecked(&self.vec) }
     }
 
+    /// get kmer by index
+    pub fn kmer(&self, k: usize, i: usize) -> &[u8] {
+        assert!(i+k <= self.len());
+        &self[i..i+k]
+    }
+
     /// Make complement for this DNA string
     ///
     /// # Examples

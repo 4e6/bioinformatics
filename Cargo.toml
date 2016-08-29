@@ -5,3 +5,6 @@ authors = ["Dmitry Bushev <bushevdv@gmail.com>"]
 
 [lib]
 name = "bio"
+
+[dependencies]
+rand = "0.3"

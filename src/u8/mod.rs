@@ -5,6 +5,9 @@ pub mod dna;
 use std::collections::HashSet;
 use std::f64;
 
+use rand;
+use rand::Rng;
+
 pub use self::dna::Dna;
 
 static A: [u8; 1] = [b'A'];
@@ -260,6 +263,52 @@ pub fn greedy_motif_search(dnas: &[Dna], k: usize, with_pseudocounts: bool) -> V
 
     best_motifs
 }
+
+/// Single iteration of randomized algorithm for motif finding.
+fn randomized_motif_search_iteration(dnas: &[Dna], k: usize) -> Vec<Dna> {
+    let mut rng = rand::thread_rng();
+    let inds: Vec<usize> = (0..).take(dnas[0].len()-k).collect();
+    let mut motifs: Vec<_> = dnas.iter()
+        .map(|dna| Dna::from_slice(dna.kmer(k, *rng.choose(&inds).unwrap())))
+        .collect();
+    let mut best_motifs = motifs.clone();
+
+    loop {
+        let p = Profile::build(&motifs, &Profile::avg_laplace);
+        let ms: Vec<_> = dnas.iter()
+            .fold(Vec::with_capacity(dnas.len()), |mut acc, dna| {
+                let (_, most_probable) = most_probable_kmer(&dna, k, &p);
+                acc.push(most_probable);
+                acc
+            });
+        motifs = ms;
+        if score(&motifs) < score(&best_motifs) {
+            best_motifs = motifs.clone();
+        } else {
+            break;
+        }
+    }
+
+    best_motifs
+}
+
+/// Randomized alogirithm for motif finding.
+pub fn randomized_motif_search(dnas: &[Dna], k: usize, iters: usize) -> Vec<Dna> {
+    assert!(iters > 0);
+    let mut best_motifs: Vec<_> = dnas.iter()
+        .map(|dna| Dna::from_slice(&dna[0..k]))
+        .collect();
+
+    for _ in 0..iters {
+        let motifs = randomized_motif_search_iteration(dnas, k);
+        if score(&motifs) < score(&best_motifs) {
+            best_motifs = motifs;
+        }
+    }
+
+    best_motifs
+}
+
 
 /// Return score, as a cumulative Hamming distance between `consensus`
 /// string for `motifs` matrix and `motifs` matrix itself.
