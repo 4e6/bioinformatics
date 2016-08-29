@@ -7,6 +7,7 @@ use std::f64;
 
 use rand;
 use rand::Rng;
+use rand::distributions::{Weighted, WeightedChoice, IndependentSample};
 
 pub use self::dna::Dna;
 
@@ -309,6 +310,47 @@ pub fn randomized_motif_search(dnas: &[Dna], k: usize, iters: usize) -> Vec<Dna>
     best_motifs
 }
 
+/// Single Gibbs sampler algorithm iteration
+pub fn gibbs_sampler_iteration(dnas: &[Dna], k: usize, t: usize, n: usize) -> Vec<Dna> {
+    let mut rng = rand::thread_rng();
+    let inds: Vec<usize> = (0..).take(dnas[0].len()-k).collect();
+    let ts: Vec<usize> = (0..).take(t).collect();
+    let mut motifs: Vec<_> = dnas.iter()
+        .map(|dna| Dna::from_slice(dna.kmer(k, *rng.choose(&inds).unwrap())))
+        .collect();
+    let mut best_motifs = motifs.clone();
+
+    for _ in 0..n {
+        let &i = rng.choose(&ts).unwrap();
+        motifs.remove(i);
+        let p = Profile::build(&motifs, &Profile::avg_laplace);
+        let motif = randomly_generated(&dnas[i], k, &p, &mut rng);
+        motifs.insert(i, motif);
+
+        if score(&motifs) < score(&best_motifs) {
+            best_motifs = motifs.clone();
+        }
+    }
+
+    best_motifs
+}
+
+/// Randomized Gibbs sampler algorithm for motif finding.
+pub fn gibbs_sampler(dnas: &[Dna], k: usize, t: usize, n: usize, iters: usize) -> Vec<Dna> {
+    assert!(iters > 0);
+    let mut best_motifs: Vec<_> = dnas.iter()
+        .map(|dna| Dna::from_slice(&dna[0..k]))
+        .collect();
+
+    for _ in 0..iters {
+        let motifs = gibbs_sampler_iteration(dnas, k, t, n);
+        if score(&motifs) < score(&best_motifs) {
+            best_motifs = motifs;
+        }
+    }
+
+    best_motifs
+}
 
 /// Return score, as a cumulative Hamming distance between `consensus`
 /// string for `motifs` matrix and `motifs` matrix itself.
@@ -322,6 +364,25 @@ fn probability(dna: &[u8], p: &Profile) -> f64 {
     dna.iter()
         .enumerate()
         .fold(1., |acc, (i, &c)| acc * p.value(c, i))
+}
+
+/// Returns weighted random kmer of `dna` based on `p` probability distribution.
+fn randomly_generated<R: rand::Rng>(dna: &[u8], k: usize, p: &Profile, rng: &mut R) -> Dna {
+    let ceil = 10000000.;
+    let probabilities: Vec<_> = dna.windows(k)
+        .map(|kmer| (probability(kmer, &p), kmer))
+        .collect();
+    let max = probabilities.iter()
+        .fold(f64::MIN, |acc, &(pr, _)| acc.max(pr));
+    // maps f64 probabilities to the u32 in a range 1..ceil
+    let mut weights: Vec<_> = probabilities.iter()
+        .map(|&(pr, kmer)| Weighted {
+            weight: ((pr / max * ceil).floor() + 1.) as u32,
+            item: kmer
+        }).collect();
+
+    let wc = WeightedChoice::new(&mut weights);
+    Dna::from_slice(wc.ind_sample(rng))
 }
 
 /// Return consensus DNA string from the most popular letters in each column of
