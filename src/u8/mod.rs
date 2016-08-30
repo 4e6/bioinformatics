@@ -6,8 +6,7 @@ use std::collections::HashSet;
 use std::f64;
 
 use rand;
-use rand::Rng;
-use rand::distributions::{Weighted, WeightedChoice, IndependentSample};
+use rand::distributions::{IndependentSample, Range, WeightedChoice, Weighted};
 
 pub use self::dna::Dna;
 
@@ -268,9 +267,9 @@ pub fn greedy_motif_search(dnas: &[Dna], k: usize, with_pseudocounts: bool) -> V
 /// Single iteration of randomized algorithm for motif finding.
 fn randomized_motif_search_iteration(dnas: &[Dna], k: usize) -> Vec<Dna> {
     let mut rng = rand::thread_rng();
-    let inds: Vec<usize> = (0..).take(dnas[0].len()-k).collect();
+    let range = Range::new(0, dnas[0].len() - k);
     let mut motifs: Vec<_> = dnas.iter()
-        .map(|dna| Dna::from_slice(dna.kmer(k, *rng.choose(&inds).unwrap())))
+        .map(|dna| Dna::from_slice(dna.kmer(k, range.ind_sample(&mut rng))))
         .collect();
     let mut best_motifs = motifs.clone();
 
@@ -313,15 +312,15 @@ pub fn randomized_motif_search(dnas: &[Dna], k: usize, iters: usize) -> Vec<Dna>
 /// Single Gibbs sampler algorithm iteration
 pub fn gibbs_sampler_iteration(dnas: &[Dna], k: usize, t: usize, n: usize) -> Vec<Dna> {
     let mut rng = rand::thread_rng();
-    let inds: Vec<usize> = (0..).take(dnas[0].len()-k).collect();
-    let ts: Vec<usize> = (0..).take(t).collect();
+    let kmer_range = Range::new(0, dnas[0].len() - k);
+    let motif_range = Range::new(0, t);
     let mut motifs: Vec<_> = dnas.iter()
-        .map(|dna| Dna::from_slice(dna.kmer(k, *rng.choose(&inds).unwrap())))
+        .map(|dna| Dna::from_slice(dna.kmer(k, kmer_range.ind_sample(&mut rng))))
         .collect();
     let mut best_motifs = motifs.clone();
 
     for _ in 0..n {
-        let &i = rng.choose(&ts).unwrap();
+        let i = motif_range.ind_sample(&mut rng);
         motifs.remove(i);
         let p = Profile::build(&motifs, &Profile::avg_laplace);
         let motif = randomly_generated(&dnas[i], k, &p, &mut rng);
@@ -368,21 +367,56 @@ fn probability(dna: &[u8], p: &Profile) -> f64 {
 
 /// Returns weighted random kmer of `dna` based on `p` probability distribution.
 fn randomly_generated<R: rand::Rng>(dna: &[u8], k: usize, p: &Profile, rng: &mut R) -> Dna {
-    let ceil = 10000000.;
+    let ceil = u16::max_value() as u32;
+    // bigger probability distribution gives better result
+    //let ceil = u32::max_value() / 100;
     let probabilities: Vec<_> = dna.windows(k)
         .map(|kmer| (probability(kmer, &p), kmer))
         .collect();
-    let max = probabilities.iter()
-        .fold(f64::MIN, |acc, &(pr, _)| acc.max(pr));
-    // maps f64 probabilities to the u32 in a range 1..ceil
+    let (min, max) = probabilities.iter()
+        .fold((f64::MAX, f64::MIN), |acc, &(pr, _)| (acc.0.min(pr), acc.1.max(pr)));
+    // maps f64 probabilities to the u32 in a range 1...ceil
+    let (m, c) = scale_coeffs(min, max, 0, ceil);
     let mut weights: Vec<_> = probabilities.iter()
         .map(|&(pr, kmer)| Weighted {
-            weight: ((pr / max * ceil).floor() + 1.) as u32,
+            weight: pr.mul_add(m, c).ceil() as u32,
             item: kmer
         }).collect();
 
     let wc = WeightedChoice::new(&mut weights);
     Dna::from_slice(wc.ind_sample(rng))
+}
+
+/// Return coefficients to scale interval [min, max] into interval [a, b].
+///
+/// Solves following system of linear equations:
+///
+/// ```text
+/// b = m*max + c
+/// a = m*min + c
+/// ```
+///
+/// Returns a pair of coefficients (m, c) that should be used to scale x:
+///
+/// ```text
+/// scaled = x*m + c
+/// ```
+///
+/// # Example
+///
+/// Scale value from range [0, 1] to [0, 10]:
+///
+/// ```
+/// use bio::u8::scale_coeffs;
+///
+/// let (m, c) = scale_coeffs(0., 1., 0, 10);
+/// let x = 0.5_f64;
+/// assert_eq!(x.mul_add(m, c), 5.0);
+/// ```
+pub fn scale_coeffs(min: f64, max: f64, a: u32, b: u32) -> (f64, f64) {
+    let c = (a as f64 * max - b as f64 * min) / (max - min);
+    let m = (b - a) as f64 / (max - min);
+    (m, c)
 }
 
 /// Return consensus DNA string from the most popular letters in each column of

@@ -5,7 +5,11 @@ use std::env;
 use bio::data::Dataset;
 use bio::u8::{Dna, gibbs_sampler};
 
-const ITERATIONS: usize = 300;
+/// Since algorithm is stochastic, results may vary. The solution
+/// saved as `data/gibbs_sampler/dataset_163_4.dat`, was produced
+/// after 100 iterations and accepted by grader program, but may be
+/// still suboptimal.
+const ITERATIONS: usize = 20;
 
 /// Code Challenge: Implement GibbsSampler.
 /// Input: Integers k, t, and N, followed by a collection of strings Dna.
