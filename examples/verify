@@ -17,10 +17,12 @@ run() {
   cd "$cwd" || exit 1
 }
 
-for data in $DATA/*/*.txt; do
+# for data in $DATA/$course/$example/$dataset.txt
+for data in $DATA/*/*/*.txt; do
   input=$(basename "$data" .txt)
   expected_output="$input.out"
   example=$(basename "$(dirname "$data")")
-  diff --brief "$DATA/$example/$expected_output" <(run "$example" "$data")
+  course=$(basename "$(dirname "$(dirname "$data")")")
+  diff --brief "$DATA/$course/$example/$expected_output" <(run "$example" "$data")
   test $? && echo "OK $example $input"
 done
