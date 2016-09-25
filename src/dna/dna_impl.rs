@@ -13,8 +13,6 @@ pub const T: u8 = b'T';
 pub const G: u8 = b'G';
 pub const C: u8 = b'C';
 
-pub static ALPHABET: [u8; 4] = [A, T, G, C];
-
 /// DNA abstraction over a byte vector.
 ///
 /// # Examples

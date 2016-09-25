@@ -8,7 +8,7 @@ use std::f64;
 use rand;
 use rand::distributions::{IndependentSample, Range, WeightedChoice, Weighted};
 
-pub use self::dna_impl::{ALPHABET, Dna};
+pub use self::dna_impl::Dna;
 use ::seq;
 
 type Seq = Vec<u8>;
@@ -17,6 +17,8 @@ pub const A: u8 = b'A';
 pub const T: u8 = b'T';
 pub const G: u8 = b'G';
 pub const C: u8 = b'C';
+
+pub static ALPHABET: [u8; 4] = [A, T, G, C];
 
 /// Returns all permutations of `text` within Hamming distance of `d`.
 pub fn neighbors(text: &[u8], d: usize) -> Vec<Vec<u8>> {
