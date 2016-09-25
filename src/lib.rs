@@ -126,7 +126,7 @@ mod tests {
 
     #[bench]
     fn bench_hamming_distance(b: &mut Bencher) {
-        let dataset = Dataset::open_text("data/hamming_distance/dataset_9_3.txt");
+        let dataset = Dataset::open_text("data/bioinformatics1/hamming_distance/dataset_9_3.txt");
         let lines = dataset.lines();
         let (da, db) = (test::black_box(lines[0].as_bytes()), test::black_box(lines[1].as_bytes()));
         b.iter(|| super::hamming_distance(da, db))

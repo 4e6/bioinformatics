@@ -8,13 +8,13 @@ static FAILED_TO_RUN_EXAMPLE: &'static str = "Failed to run example";
 
 #[test]
 fn greedy_motif_search() {
-    let reference = Dataset::open_text("data/greedy_motif_search/dataset_159_5.out");
+    let reference = Dataset::open_text("data/bioinformatics1/greedy_motif_search/dataset_159_5.out");
     let command = Command::new("cargo")
         .arg("run")
         .arg("--release")
         .arg("--example")
         .arg("greedy_motif_search")
-        .arg("data/greedy_motif_search/dataset_159_5.dat")
+        .arg("data/bioinformatics1/greedy_motif_search/dataset_159_5.dat")
         .output()
         .expect(FAILED_TO_RUN_EXAMPLE);
 
@@ -24,13 +24,13 @@ fn greedy_motif_search() {
 
 #[test]
 fn greedy_motif_search_with_pseudocounts() {
-    let reference = Dataset::open_text("data/greedy_motif_search_with_pseudocounts/dataset_160_9.out");
+    let reference = Dataset::open_text("data/bioinformatics1/greedy_motif_search_with_pseudocounts/dataset_160_9.out");
     let command = Command::new("cargo")
         .arg("run")
         .arg("--release")
         .arg("--example")
         .arg("greedy_motif_search")
-        .arg("data/greedy_motif_search_with_pseudocounts/dataset_160_9.dat")
+        .arg("data/bioinformatics1/greedy_motif_search_with_pseudocounts/dataset_160_9.dat")
         .arg("with_pseudocounts")
         .output()
         .expect(FAILED_TO_RUN_EXAMPLE);
@@ -41,13 +41,13 @@ fn greedy_motif_search_with_pseudocounts() {
 
 #[test]
 fn most_probable_kmer() {
-    let reference = Dataset::open_text("data/most_probable_kmer/dataset_159_3.out");
+    let reference = Dataset::open_text("data/bioinformatics1/most_probable_kmer/dataset_159_3.out");
     let command = Command::new("cargo")
         .arg("run")
         .arg("--release")
         .arg("--example")
         .arg("most_probable_kmer")
-        .arg("data/most_probable_kmer/dataset_159_3.dat")
+        .arg("data/bioinformatics1/most_probable_kmer/dataset_159_3.dat")
         .output()
         .expect(FAILED_TO_RUN_EXAMPLE);
 
@@ -57,14 +57,14 @@ fn most_probable_kmer() {
 
 #[test]
 fn motif_enumeration() {
-    let reference = Dataset::open_text("data/motif_enumeration/sample.out");
+    let reference = Dataset::open_text("data/bioinformatics1/motif_enumeration/sample.out");
 
     let command = Command::new("cargo")
         .arg("run")
         .arg("--release")
         .arg("--example")
         .arg("motif_enumeration")
-        .arg("data/motif_enumeration/sample.in")
+        .arg("data/bioinformatics1/motif_enumeration/sample.in")
         .output()
         .expect(FAILED_TO_RUN_EXAMPLE);
 

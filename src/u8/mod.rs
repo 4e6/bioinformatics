@@ -452,7 +452,7 @@ mod tests {
 
     #[bench]
     fn bench_find_by(b: &mut Bencher) {
-        let dataset = Dataset::open_text("data/pattern_count/dataset_2_7.txt");
+        let dataset = Dataset::open_text("data/bioinformatics1/pattern_count/dataset_2_7.txt");
         let lines = dataset.lines();
         let (text, pattern) = (lines[0].as_bytes(), lines[1].as_bytes());
         b.iter(|| super::find_by(text, pattern, |a, b| a == b))

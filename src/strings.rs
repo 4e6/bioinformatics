@@ -329,8 +329,8 @@ mod tests {
 
     #[test]
     fn test_indexes() {
-        let answer = Dataset::open_text("data/pattern_count/dataset_2_7.out");
-        let dataset = Dataset::open_text("data/pattern_count/dataset_2_7.txt");
+        let answer = Dataset::open_text("data/bioinformatics1/pattern_count/dataset_2_7.out");
+        let dataset = Dataset::open_text("data/bioinformatics1/pattern_count/dataset_2_7.txt");
         let lines = dataset.lines();
         let (text, pattern) = (lines[0], lines[1]);
         assert_eq!(super::indexes(text, pattern).len(), answer.parse::<usize>().unwrap());
@@ -338,7 +338,7 @@ mod tests {
 
     #[bench]
     fn bench_indexes(b: &mut Bencher) {
-        let dataset = Dataset::open_text("data/pattern_count/dataset_2_7.txt");
+        let dataset = Dataset::open_text("data/bioinformatics1/pattern_count/dataset_2_7.txt");
         let lines = dataset.lines();
         let (text, pattern) = (lines[0], lines[1]);
         b.iter(|| super::indexes(text, pattern));
