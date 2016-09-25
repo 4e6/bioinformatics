@@ -1,6 +1,7 @@
 extern crate bio;
 
-use bio::strings::{gc_skew, min_indices};
+use bio::seq::min_indices;
+use bio::strings::gc_skew;
 
 /// Minimum Skew Problem: Find a position in a genome where the skew diagram attains a minimum.
 /// Input: A DNA string Genome.
@@ -11,7 +12,7 @@ fn main() {
     bio::io::read_line(&mut genome);
 
     let skew = gc_skew(&genome);
-    let (_, mut inds) = min_indices(skew);
+    let mut inds = min_indices(skew);
     // grading program expect 1-based indexing
     for i in inds.iter_mut() {
         *i += 1;

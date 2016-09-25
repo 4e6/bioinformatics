@@ -3,7 +3,7 @@ extern crate bio;
 use std::env;
 
 use bio::data::Dataset;
-use bio::u8::{Dna, median_string};
+use bio::dna::{Dna, median_string};
 
 /// Code Challenge: Implement MedianString.
 /// Input: An integer k, followed by a collection of strings Dna.
@@ -18,7 +18,7 @@ fn main() {
 
     let k = lines[0].parse::<usize>().unwrap();
     let dnas: Vec<Dna> = lines[1..].into_iter()
-        .map(|x| Dna::from_str_unchecked(x))
+        .map(|x| Dna::from_str(x))
         .collect();
 
     let median = median_string(&dnas, k);

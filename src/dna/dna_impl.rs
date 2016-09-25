@@ -1,16 +1,19 @@
-//! Abstractions to work with DNA sequences.
+//! DNA implementation based on u8 vector.
 
 use std::ascii::AsciiExt;
-use std::str;
 use std::fmt;
+use std::iter::IntoIterator;
 use std::ops;
+use std::slice;
+use std::str;
+use std::vec;
 
 pub const A: u8 = b'A';
 pub const T: u8 = b'T';
 pub const G: u8 = b'G';
 pub const C: u8 = b'C';
 
-pub static NUCS: &'static [u8; 4] = &[A, T, G, C];
+pub static ALPHABET: [u8; 4] = [A, T, G, C];
 
 /// DNA abstraction over a byte vector.
 ///
@@ -20,16 +23,16 @@ pub static NUCS: &'static [u8; 4] = &[A, T, G, C];
 /// slice methods directly on `Dna`:
 ///
 /// ```
-/// use bio::u8::Dna;
+/// use bio::dna::Dna;
 ///
-/// let dna = Dna::from_str_unchecked("AATG");
+/// let dna = Dna::from_str("AATG");
 /// let mut kmers = dna.windows(2);
 ///
 /// assert_eq!(kmers.next(), Some("AA".as_bytes()));
 /// assert_eq!(kmers.next(), Some("AT".as_bytes()));
 /// assert_eq!(kmers.next(), Some("TG".as_bytes()));
 /// ```
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, PartialEq, PartialOrd, Ord, Hash)]
 pub struct Dna {
     vec: Vec<u8>,
 }
@@ -44,17 +47,21 @@ impl Dna {
         Dna { vec: s.to_vec() }
     }
 
-    pub fn from_str(s: &str) -> Result<Dna, AsciiError> {
+    pub fn parse_from_str(s: &str) -> Result<Dna, AsciiError> {
         str::FromStr::from_str(s)
     }
 
-    pub fn from_str_unchecked(s: &str) -> Dna {
+    pub fn from_str(s: &str) -> Dna {
         let bytes = s.as_bytes();
         Dna::from_slice(bytes)
     }
 
-    pub fn to_string(&self) -> String {
-        unsafe { String::from_utf8_unchecked(self.vec.clone()) }
+    pub fn from_string(s: String) -> Dna {
+        Dna::new(s.into_bytes())
+    }
+
+    pub fn to_string(self) -> String {
+        unsafe { String::from_utf8_unchecked(self.vec) }
     }
 
     pub fn as_str(&self) -> &str {
@@ -72,9 +79,9 @@ impl Dna {
     /// # Examples
     ///
     /// ```
-    /// use bio::u8::Dna;
+    /// use bio::dna::Dna;
     ///
-    /// let mut dna = Dna::from_str_unchecked("AATG");
+    /// let mut dna = Dna::from_str("AATG");
     /// dna.complement();
     ///
     /// assert_eq!("TTAC", dna.as_str());
@@ -90,12 +97,10 @@ impl Dna {
     /// # Examples
     ///
     /// ```
-    /// use bio::u8::Dna;
+    /// use bio::dna::Dna;
     ///
-    /// let rcomp = Dna::from_str("AATG")
-    ///     .map(|dna| dna.reverse_complement())
-    ///     .unwrap();
-    ///
+    /// let dna = Dna::from_str("AATG");
+    /// let rcomp = dna.reverse_complement();
     /// assert_eq!("CATT", rcomp.as_str());
     /// ```
     pub fn reverse_complement(&self) -> Dna {
@@ -103,12 +108,6 @@ impl Dna {
         dna.complement();
         dna.reverse();
         dna
-    }
-
-    pub fn find<F>(&self, pattern: &Dna, compare: F) -> (Vec<usize>, Vec<&[u8]>)
-        where F: Fn(&[u8], &[u8]) -> bool {
-
-        super::find_by(&self.vec, &pattern.vec, compare)
     }
 
 }
@@ -124,6 +123,8 @@ fn complement(nuc: u8) -> u8 {
         x => x,
     }
 }
+
+impl Eq for Dna {}
 
 impl Clone for Dna {
     fn clone(&self) -> Self {
@@ -183,6 +184,24 @@ impl str::FromStr for Dna {
     }
 }
 
+impl IntoIterator for Dna {
+    type Item = u8;
+    type IntoIter = vec::IntoIter<u8>;
+
+    fn into_iter(self) -> vec::IntoIter<u8> {
+        self.vec.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Dna {
+    type Item = &'a u8;
+    type IntoIter = slice::Iter<'a, u8>;
+
+    fn into_iter(self) -> slice::Iter<'a, u8> {
+        self.iter()
+    }
+}
+
 /// Errors which can occur when attempting to interpret a sequence of
 /// `u8` as `Dna`.
 #[derive(Debug)]
@@ -194,16 +213,16 @@ impl AsciiError {
     /// Returns the index in the given string up to which valid Ascii
     /// was verified.
     ///
-    /// It is the maximum index such that `from_str(input[..index])`
+    /// It is the maximum index such that `parse_from_str(input[..index])`
     /// would return Ok(_).
     ///
     /// # Examples
     ///
     /// ```
-    /// use bio::u8::Dna;
+    /// use bio::dna::Dna;
     ///
     /// let s = "AAT©";
-    /// let err = Dna::from_str(s).unwrap_err();
+    /// let err = Dna::parse_from_str(s).unwrap_err();
     /// assert_eq!(2, err.valid_up_to());
     /// ```
     pub fn valid_up_to(&self) -> usize { self.valid_up_to }
@@ -224,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_from_str() {
-        let dna = Dna::from_str_unchecked(SAMPLE);
+        let dna = Dna::from_str(SAMPLE);
         assert_eq!(SAMPLE.to_string(), dna.to_string());
     }
 
@@ -237,13 +256,13 @@ mod tests {
 
     #[test]
     fn test_as_str() {
-        let dna = Dna::from_str_unchecked(SAMPLE);
+        let dna = Dna::from_str(SAMPLE);
         assert_eq!(SAMPLE, dna.as_str());
     }
 
     #[test]
     fn test_reverse_complement() {
-        let mut dna = Dna::from_str_unchecked("AAAACCCGGT");
+        let mut dna = Dna::from_str("AAAACCCGGT");
         let dna_rcomp = dna.reverse_complement();
         dna.complement();
         dna.reverse();

@@ -1,7 +1,7 @@
 extern crate bio;
 
-use std::str::from_utf8_unchecked;
-use bio::u8::Dna;
+use std::str;
+use bio::dna::Dna;
 
 /// Code Challenge: Solve the String Composition Problem.
 /// Input: An integer k and a string Text.
@@ -15,10 +15,10 @@ fn main() {
     bio::io::read_line(&mut s_dna);
 
     let k = s_k.parse::<usize>().unwrap();
-    let dna = Dna::from_str_unchecked(&s_dna);
+    let dna = Dna::from_string(s_dna);
 
     let mut res = dna.windows(k)
-        .map(|x| unsafe { from_utf8_unchecked(x) })
+        .map(|x| unsafe { str::from_utf8_unchecked(x) })
         .collect::<Vec<_>>();
     res.sort();
 

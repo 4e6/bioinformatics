@@ -1,11 +1,10 @@
-//! Algorithms from Bioinformatics course.
-//!
-//! Algorithms from the course usually described in terms of arrays and indexed
-//! access. Modules `u8` and `adt` contains proper implementation.
+//! Algorithms on strings.
 
 use std::collections::HashSet;
 use std::iter::Scan;
 use std::str::Chars;
+
+use ::dna::Dna;
 
 static A: &'static str = "A";
 static T: &'static str = "T";
@@ -264,22 +263,6 @@ pub fn gc_skew_scan<'a>(genome: &'a str) -> Scan<Chars<'a>, isize, fn(&mut isize
 
 }
 
-pub fn min_indices<I: Iterator<Item=isize>>(iter: I) -> (isize, Vec<usize>) {
-    let mut inds = Vec::new();
-    let mut min = isize::max_value();
-
-    for (i, x) in iter.enumerate() {
-        if x < min {
-            inds = vec![i];
-            min = x;
-        } else if x == min {
-            inds.push(i);
-        }
-    }
-
-    (min, inds)
-}
-
 pub fn hamming_distance(xs: &str, ys: &str) -> usize {
     let (xi, yi) = (xs.chars(), ys.chars());
     xi.zip(yi).fold(0, |acc, (x, y)| {
@@ -317,7 +300,7 @@ pub fn neighbors(pattern: &str, d: usize) -> Vec<String> {
 }
 
 fn reverse_complement(text: &str) -> String {
-    super::u8::Dna::from_str_unchecked(text).reverse_complement().to_string()
+    Dna::from_str(text).reverse_complement().to_string()
 }
 
 #[cfg(test)]

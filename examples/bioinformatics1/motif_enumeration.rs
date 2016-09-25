@@ -3,7 +3,7 @@ extern crate bio;
 use std::env;
 
 use bio::data::Dataset;
-use bio::u8::{Dna, motif_enumeration};
+use bio::dna::{Dna, motif_enumeration};
 
 /// Code Challenge: Implement MotifEnumeration (reproduced below).
 /// Input: Integers k and d, followed by a collection of strings Dna.
@@ -20,7 +20,7 @@ fn main() {
         .map(|x| x.parse::<usize>().unwrap())
         .collect();
     let dnas: Vec<Dna> = tl.iter()
-        .map(|x| Dna::from_str_unchecked(x))
+        .map(|x| Dna::from_str(x))
         .collect();
 
     let motifs = motif_enumeration(&dnas, kd[0], kd[1]);

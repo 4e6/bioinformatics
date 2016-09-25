@@ -1,6 +1,6 @@
 extern crate bio;
 
-use bio::u8::find;
+use bio::seq::find;
 
 /// Code Challenge: Solve the Pattern Matching Problem.
 /// Input: Two strings, Pattern and Genome.

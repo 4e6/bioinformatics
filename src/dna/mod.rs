@@ -1,6 +1,6 @@
-//! Algorithms on `&[u8]` slices of bytes
+//! Algorithms on DNA sequences
 
-pub mod dna;
+mod dna_impl;
 
 use std::collections::HashSet;
 use std::f64;
@@ -8,57 +8,38 @@ use std::f64;
 use rand;
 use rand::distributions::{IndependentSample, Range, WeightedChoice, Weighted};
 
-pub use self::dna::Dna;
+pub use self::dna_impl::{ALPHABET, Dna};
+use ::seq;
 
-static A: [u8; 1] = [b'A'];
-static T: [u8; 1] = [b'T'];
-static C: [u8; 1] = [b'C'];
-static G: [u8; 1] = [b'G'];
+type Seq = Vec<u8>;
 
-type Text = Vec<u8>;
-
-/// Search for occurrences of `pattern` in `text`. Returns indices
-/// of the first character of all `text` slices that matches the `pattern`.
-pub fn find(text: &[u8], pattern: &[u8]) -> Vec<usize> {
-    let (inds, _) = self::find_by(text, pattern, |a, b| a == b);
-    inds
-}
-
-/// Fuzzy search of a `pattern` in `text` by a given `compare` function.
-/// Returns a pair containing vector of indices and the vector of matched slices.
-pub fn find_by<'a, 'b, F>(text: &'a [u8], pattern: &'b [u8], compare: F) -> (Vec<usize>, Vec<&'a [u8]>)
-    where F: Fn(&[u8], &[u8]) -> bool {
-
-    text.windows(pattern.len())
-        .enumerate()
-        .filter(|&(_, chunk)| compare(chunk, pattern))
-        .unzip()
-}
+pub const A: u8 = b'A';
+pub const T: u8 = b'T';
+pub const G: u8 = b'G';
+pub const C: u8 = b'C';
 
 /// Returns all permutations of `text` within Hamming distance of `d`.
-pub fn neighbors(text: &[u8], d: usize) -> Vec<Text> {
+pub fn neighbors(text: &[u8], d: usize) -> Vec<Vec<u8>> {
     let mut res = HashSet::new();
     if d == 0 {
         res.insert(text.to_vec());
         res.into_iter().collect()
     } else if text.len() == 1 {
-        res.insert(A.to_vec());
-        res.insert(T.to_vec());
-        res.insert(G.to_vec());
-        res.insert(C.to_vec());
+        for a in ALPHABET.iter().cloned() {
+            res.insert(vec![a]);
+        }
         res.into_iter().collect()
     } else {
         let tail = &text[1..];
         let suffixes = neighbors(tail, d);
         for suffix in suffixes.iter() {
-            if ::hamming_distance(tail, suffix) < d {
-                res.insert(::add(&A, suffix));
-                res.insert(::add(&T, suffix));
-                res.insert(::add(&G, suffix));
-                res.insert(::add(&C, suffix));
+            if seq::hamming_distance(tail, suffix) < d {
+                for a in ALPHABET.iter().cloned() {
+                    res.insert(seq::concat(&[a], suffix));
+                }
             } else {
                 let h = &text[0..1];
-                res.insert(::add(h, suffix));
+                res.insert(seq::concat(h, suffix));
             }
         }
         res.into_iter().collect()
@@ -73,7 +54,7 @@ fn distance(dnas: &[Dna], pattern: &Dna) -> usize {
     for dna in dnas.iter() {
         let mut h = usize::max_value();
         for kmer in dna.windows(k) {
-            let d = ::hamming_distance(&pattern, kmer);
+            let d = seq::hamming_distance(pattern, kmer);
             if h > d {
                 h = d;
             }
@@ -97,7 +78,7 @@ pub fn motif_enumeration(dnas: &[Dna], k: usize, d: usize) -> HashSet<Dna> {
     for kmer in dna0.windows(k) {
         for kdmer in neighbors(kmer, d).iter() {
             let all_contains = dnas.iter().all(|dna| {
-                let (inds, _) = self::find_by(dna, kdmer, |a, b| ::hamming_distance(a, b) <= d);
+                let (inds, _) = seq::find_by(dna, kdmer, |a, b| seq::hamming_distance(a, b) <= d);
                 inds.len() > 0
             });
             if all_contains {
@@ -112,7 +93,7 @@ pub fn motif_enumeration(dnas: &[Dna], k: usize, d: usize) -> HashSet<Dna> {
 pub fn median_string(dnas: &[Dna], k: usize) -> Dna {
     let mut d = usize::max_value();
     let mut median = Dna::new(vec![]);
-    for kmer in ::permutations_with_repetitions(dna::NUCS, k) {
+    for kmer in seq::permutations_with_repetitions(&ALPHABET, k) {
         let pattern = Dna::new(kmer);
         let dk_distance = distance(dnas, &pattern);
         if d > dk_distance {
@@ -178,10 +159,10 @@ impl Profile {
     pub fn build<F>(dnas: &[Dna], avg: &F) -> Profile
         where F: Fn(&mut f64, f64) {
 
-        let pa = Profile::vector(dna::A, &dnas, avg);
-        let pc = Profile::vector(dna::C, &dnas, avg);
-        let pg = Profile::vector(dna::G, &dnas, avg);
-        let pt = Profile::vector(dna::T, &dnas, avg);
+        let pa = Profile::vector(A, &dnas, avg);
+        let pc = Profile::vector(C, &dnas, avg);
+        let pg = Profile::vector(G, &dnas, avg);
+        let pt = Profile::vector(T, &dnas, avg);
 
         Profile::new(pa, pc, pg, pt)
     }
@@ -194,17 +175,17 @@ impl Profile {
     /// Profile value for `nuc` at position `i`.
     fn value(&self, nuc: u8, i: usize) -> f64 {
         match nuc {
-            dna::A => self.a[i],
-            dna::C => self.c[i],
-            dna::G => self.g[i],
-            dna::T => self.t[i],
+            A => self.a[i],
+            C => self.c[i],
+            G => self.g[i],
+            T => self.t[i],
             _ => panic!("Unsupported character {}", nuc as char),
         }
     }
 
     /// `i`-th column with labels
     fn column(&self, i: usize) -> [(u8, f64); 4] {
-        [(dna::A, self.a[i]), (dna::C, self.c[i]), (dna::G, self.g[i]), (dna::T, self.t[i])]
+        [(A, self.a[i]), (C, self.c[i]), (G, self.g[i]), (T, self.t[i])]
     }
 
     /// Most popular nucleotide in `i`-th column.
@@ -309,6 +290,7 @@ pub fn randomized_motif_search(dnas: &[Dna], k: usize, iters: usize) -> Vec<Dna>
     best_motifs
 }
 
+
 /// Single Gibbs sampler algorithm iteration
 pub fn gibbs_sampler_iteration(dnas: &[Dna], k: usize, t: usize, n: usize) -> Vec<Dna> {
     let mut rng = rand::thread_rng();
@@ -407,7 +389,7 @@ fn randomly_generated<R: rand::Rng>(dna: &[u8], k: usize, p: &Profile, rng: &mut
 /// Scale value from range [0, 1] to [0, 10]:
 ///
 /// ```
-/// use bio::u8::scale_coeffs;
+/// use bio::dna::scale_coeffs;
 ///
 /// let (m, c) = scale_coeffs(0., 1., 0, 10);
 /// let x = 0.5_f64;
@@ -435,26 +417,16 @@ fn consensus(motifs: &[Dna]) -> Dna {
 #[cfg(test)]
 mod tests {
 
-    use test::Bencher;
-
     use super::Dna;
-    use data::Dataset;
 
     #[test]
     fn distance() {
-        let pattern = Dna::from_str_unchecked("AAA");
+        let pattern = Dna::from_str("AAA");
         let dnas: Vec<_> = ["TTACCTTAAC", "GATATCTGTC", "ACGGCGTTCG", "CCCTAAAGAG", "CGTCAGAGGT"]
             .iter()
-            .map(|x| Dna::from_str_unchecked(x))
+            .map(|x| Dna::from_str(x))
             .collect();
         assert_eq!(super::distance(&dnas, &pattern), 5);
     }
 
-    #[bench]
-    fn bench_find_by(b: &mut Bencher) {
-        let dataset = Dataset::open_text("data/bioinformatics1/pattern_count/dataset_2_7.txt");
-        let lines = dataset.lines();
-        let (text, pattern) = (lines[0].as_bytes(), lines[1].as_bytes());
-        b.iter(|| super::find_by(text, pattern, |a, b| a == b))
-    }
 }

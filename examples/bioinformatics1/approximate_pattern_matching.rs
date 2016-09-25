@@ -1,7 +1,7 @@
 extern crate bio;
 
-use bio::hamming_distance;
-use bio::u8::Dna;
+use bio::seq;
+use bio::dna::Dna;
 
 /// Approximate Pattern Matching Problem: Find all approximate occurrences of a pattern in a string.
 /// Input: Strings Pattern and Text along with an integer d.
@@ -15,11 +15,11 @@ fn main() {
     bio::io::read_line(&mut dna_string);
     bio::io::read_line(&mut d_string);
 
-    let pattern = pattern_string.parse::<Dna>().unwrap();
-    let dna = dna_string.parse::<Dna>().unwrap();
+    let pattern = Dna::from_string(pattern_string);
+    let dna = Dna::from_string(dna_string);
     let d = d_string.parse::<usize>().unwrap();
 
-    let (indices, _) = dna.find(&pattern, |chunk, pat| hamming_distance(chunk, pat) <= d);
+    let (indices, _) = seq::find_by(&dna, &pattern, |chunk, pat| seq::hamming_distance(chunk, pat) <= d);
 
     bio::io::print_vec(&indices);
 }

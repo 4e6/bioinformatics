@@ -3,7 +3,7 @@ extern crate bio;
 use std::env;
 
 use bio::data::Dataset;
-use bio::u8::{Dna, gibbs_sampler};
+use bio::dna::{Dna, gibbs_sampler};
 
 /// Since algorithm is stochastic, results may vary. The solution
 /// saved as `data/gibbs_sampler/dataset_163_4.dat`, was produced
@@ -26,7 +26,7 @@ fn main() {
         .map(|x| x.parse::<usize>().unwrap())
         .collect();
     let dnas: Vec<_> = lines[1..].iter()
-        .map(|x| Dna::from_str_unchecked(x))
+        .map(|x| Dna::from_str(x))
         .collect();
 
     assert_eq!(dnas.len(), ktn[1]);

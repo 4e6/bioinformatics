@@ -1,6 +1,6 @@
 extern crate bio;
 
-use bio::u8::find;
+use bio::seq::find;
 
 /// 1.2 Hidden Messages in the Replication Origin
 ///

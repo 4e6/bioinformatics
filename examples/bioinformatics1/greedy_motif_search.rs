@@ -3,7 +3,7 @@ extern crate bio;
 use std::env;
 
 use bio::data::Dataset;
-use bio::u8::{Dna, greedy_motif_search};
+use bio::dna::{Dna, greedy_motif_search};
 
 /// Code Challenge: Implement GreedyMotifSearch.
 /// Input: Integers k and t, followed by a collection of strings Dna.
@@ -23,7 +23,7 @@ fn main() {
         .map(|x| x.parse::<usize>().unwrap())
         .collect();
     let dnas: Vec<_> = lines[1..].iter()
-        .map(|x| Dna::from_str_unchecked(x))
+        .map(|x| Dna::from_str(x))
         .collect();
 
     assert_eq!(dnas.len(), kt[1]);

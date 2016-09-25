@@ -4,7 +4,7 @@ use std::env;
 use std::str;
 
 use bio::data::Dataset;
-use bio::u8::{Dna, Profile, most_probable_kmer};
+use bio::dna::{Dna, Profile, most_probable_kmer};
 
 /// Profile-most Probable k-mer Problem: Find a Profile-most probable k-mer in a string.
 /// Input: A string Text, an integer k, and a 4 × k matrix Profile.
